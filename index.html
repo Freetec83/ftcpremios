@@ -106,20 +106,30 @@ th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyKZOzLcYMTGCFVokdvdLw7xirI80swAM6tancoXbYlLcELxVOAQYMKcgT2r7WM52N1/exec';
 const ADMIN_PASS='8378';
 const PRIZE_PERCENT=0.7;
-let sales=[];
+let sales=[]; 
 let roletaInterval=null;
 
-document.getElementById('prizePercentText').textContent=Math.round(PRIZE_PERCENT*100)+'%';
+/* ---------- Modal Regulamento ---------- */
+function showReg(){ document.getElementById('modalReg').style.display='flex'; }
+function closeReg(){ document.getElementById('modalReg').style.display='none'; }
 
-/* ---------- Fetch vendas ---------- */
-async function fetchSales(){
-  try{
-    const res=await fetch(WEB_APP_URL);
-    const data=await res.json();
-    sales=data.items || data;
-    renderGrid();
-    updateStats();
-  }catch(e){ console.log('Erro fetch:',e); }
+/* ---------- Modal Reserva ---------- */
+function openReserve(num){
+  document.getElementById('modalNum').textContent=num;
+  document.getElementById('resEmail').value='';
+  document.getElementById('resPhone').value='';
+  document.getElementById('afterReserve').style.display='none';
+  document.getElementById('modalReserve').style.display='flex';
+}
+function closeReserve(){ document.getElementById('modalReserve').style.display='none'; }
+function confirmReserve(){
+  const n=document.getElementById('modalNum').textContent;
+  const email=document.getElementById('resEmail').value.trim();
+  const phone=document.getElementById('resPhone').value.trim();
+  if(!email||!phone)return alert('Preencha e-mail e celular.');
+  sales.push({number:n,email,phone,paid:false});
+  renderGrid();
+  closeReserve();
 }
 
 /* ---------- Render Grid ---------- */
@@ -128,25 +138,49 @@ function renderGrid(){
   grid.innerHTML='';
   for(let i=0;i<100;i++){
     const n=String(i).padStart(2,'0');
-    const s=sales.find(x=>x.number===n);
     const el=document.createElement('div');
     el.className='num';
     el.textContent=n;
-    el.onclick = ()=> s?null:openReserve(n);
+    const s=sales.find(x=>x.number===n);
     if(s){
       el.classList.add(s.paid?'paid':'reserved');
       el.textContent+= s.paid?' • PAGO':' • RESERVADO';
+      el.onclick=null;
+    }else{
+      el.onclick=()=>openReserve(n);
     }
     grid.appendChild(el);
   }
+  updateStats();
 }
 
 /* ---------- Stats ---------- */
 function updateStats(){
-  const reserved = sales.length;
-  const paid = sales.filter(s=>s.paid).length;
-  const total = paid * 10;
-  const prize = total * PRIZE_PERCENT;
-  document.getElementById('countReserved').textContent = reserved;
-  document.getElementById('countPaid').textContent = paid;
-  document.getElement
+  const reserved=sales.length;
+  const paid=sales.filter(s=>s.paid).length;
+  const total=paid*10;
+  const prize=total*PRIZE_PERCENT;
+  document.getElementById('countReserved').textContent=reserved;
+  document.getElementById('countPaid').textContent=paid;
+  document.getElementById('totalArrecadado').textContent='R$'+total.toFixed(2).replace('.',',');
+  document.getElementById('prizeAmount').textContent='R$'+prize.toFixed(2).replace('.',',');
+}
+
+/* ---------- Admin ---------- */
+function openAdmin(){
+  const pass=prompt('Senha do organizador:');
+  if(pass!==ADMIN_PASS)return alert('Senha incorreta.');
+  alert('Painel do organizador: funcionalidade de marcar pagos e sortear.');
+}
+
+/* ---------- Roleta ---------- */
+function startRoleta(){
+  const pool=sales.filter(s=>s.paid).map(x=>x.number);
+  if(pool.length===0)return alert('Sem números pagos.');
+  const box=document.getElementById('roletaBox');
+  let step=0, totalSteps=300, currentSpeed=50;
+  roletaInterval=setInterval(()=>{
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    box.textContent=pick;
+    step++;
+    currentSpeed*=1.02; // desaceleração
