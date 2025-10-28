@@ -1,146 +1,180 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FTC Prêmios — Rifa</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FTC Prêmios — Rifa Nº001</title>
 <style>
 :root{
-  --bg:#060607;
-  --panel:#0f1013;
-  --accent:#d4af37;
-  --muted:#9aa4b2;
-  --paid:#16c784;
-  --reserved:#d4af37;
-  --free:#6b7280;
+  --bg:#060607; --panel:#0f1013; --accent:#d4af37; --muted:#9aa4b2;
+  --paid:#16c784; --reserved:#ffb84d; --text:#e6eef6;
 }
-body{
-  margin:0;
-  background:var(--bg);
-  color:white;
-  font-family:Arial,Helvetica,sans-serif;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-header{
-  text-align:center;
-  margin-top:2rem;
-  margin-bottom:1rem;
-}
-header h1{
-  color:var(--accent);
-  font-size:1.8rem;
-  margin:0;
-}
-header h2{
-  color:#fff;
-  font-weight:normal;
-  margin:0.3rem 0 0.8rem;
-}
-.stats{
-  display:flex;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:1rem;
-  font-size:0.95rem;
-  margin-bottom:1rem;
-}
-.stats span{display:flex;align-items:center;gap:4px;}
-.stats .paid{color:var(--paid);}
-.stats .reserved{color:var(--reserved);}
-.stats .free{color:var(--free);}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(60px,1fr));
-  gap:8px;
-  max-width:500px;
-  margin:1rem;
-}
-.number{
-  padding:0.7rem;
-  border-radius:8px;
-  background:var(--panel);
-  color:white;
-  text-align:center;
-  cursor:pointer;
-  font-weight:bold;
-  transition:0.2s;
-}
-.number.free:hover{background:#1f2126;}
-.number.paid{background:var(--paid);}
-.number.reserved{background:var(--reserved);color:#000;}
-footer{
-  color:var(--muted);
-  text-align:center;
-  font-size:0.8rem;
-  margin:2rem 0;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:radial-gradient(circle at 10% 10%, #08060a 0%, #050505 60%);color:var(--text);padding:18px}
+.container{max-width:1150px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.logo{height:56px;border-radius:8px}
+h1{margin:0;font-size:20px}
+.sub{color:var(--muted);font-size:13px}
+.topright{margin-left:auto;text-align:right;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin:18px 0}
+.num{background:linear-gradient(180deg,#101217 0%,#0b0f14 100%);padding:10px;border-radius:8px;text-align:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.6);font-weight:700;border:1px solid rgba(255,255,255,0.02);color:var(--text)}
+.num.reserved{background:linear-gradient(180deg,#3a2007,#4b2b09);color:#fff;cursor:not-allowed;border:1px solid rgba(0,0,0,0.4)}
+.num.paid{background:linear-gradient(180deg,#06311f,#074228);color:#eafff0;cursor:not-allowed;border:1px solid rgba(0,0,0,0.4)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button{background:var(--accent);color:#061017;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.card{background:linear-gradient(180deg,#071018,#09121a);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.small{font-size:13px;color:var(--muted)}
+.stats{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:linear-gradient(180deg,#08121a,#061018);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);min-width:140px}
+.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:9999}
+input,textarea{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);font-size:14px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;font-size:13px;color:var(--muted)}
+.roleta-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.roleta{width:360px;height:140px;background:radial-gradient(circle at 30% 10%, #2b0f00, #050609);border-radius:12px;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;letter-spacing:3px;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:4px solid rgba(212,175,55,0.06)}
+.footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+.mute{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
+@media(max-width:820px){.grid{grid-template-columns:repeat(5,1fr)}.roleta{width:100%;height:110px;font-size:36px}}
 </style>
 </head>
 <body>
+<div class="container">
   <header>
-    <h1>🏆 FTC Prêmios</h1>
-    <h2 id="raffleInfo">Carregando rifa...</h2>
-    <div class="stats">
-      <span class="paid">💰 Pagos: <b id="paidCount">0</b></span>
-      <span class="reserved">⭐ Reservados: <b id="reservedCount">0</b></span>
-      <span class="free">⚪ Livres: <b id="freeCount">0</b></span>
+    <img src="logo.jpg" alt="FTC Prêmios" class="logo" onerror="this.style.display='none'">
+    <div>
+      <h1>FTC Prêmios</h1>
+      <div class="sub">Rifa Nº001 — Números 00–99 • Valor por cota: R$10,00 • Prêmio: <strong id="prizePercentText">70%</strong></div>
+    </div>
+    <div class="topright">
+      <div class="small">Privado • Apenas convidados</div>
+      <div style="margin-top:6px" class="small" id="drawDateText">Sorteio: --/--/---- --:--</div>
     </div>
   </header>
 
-  <div id="numbers" class="grid"></div>
+  <div class="actions">
+    <button onclick="showReg()">📜 Regulamento</button>
+    <button class="secondary" onclick="openAdmin()">🔐 Organizador</button>
+    <button class="secondary" onclick="exportCSV()">⤓ Exportar CSV</button>
+    <button onclick="window.open('https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt','_blank')">🔗 Entrar no grupo privado</button>
+  </div>
 
-  <footer>
-    <p>Atualizado automaticamente a cada 20 segundos</p>
-  </footer>
+  <div class="card stats">
+    <div class="stat"><strong id="countReserved">0</strong><div class="small">reservados</div></div>
+    <div class="stat"><strong id="countPaid">0</strong><div class="small">pagos</div></div>
+    <div class="stat"><strong id="totalArrecadado">R$0,00</strong><div class="small">arrecadado</div></div>
+    <div class="stat"><strong id="prizeAmount">R$0,00</strong><div class="small">prêmio (70%)</div></div>
+    <div style="margin-left:auto" class="stat"><button id="muteBtn" class="mute" onclick="toggleMute()">🔊 Desativar som</button></div>
+  </div>
+
+  <div class="card small" style="text-align:center;margin-bottom:12px">
+    Pagamentos combinados no grupo privado (WhatsApp). O organizador confirma manualmente os pagamentos.
+  </div>
+
+  <div class="grid" id="grid">Carregando rifa...</div>
+
+  <div class="card" id="salesBox">
+    <strong>Vendas / Reservas</strong>
+    <div id="salesList" style="margin-top:10px">Nenhuma venda ainda.</div>
+  </div>
+
+  <div style="margin-top:14px" class="footer">
+    🔒 <strong>Rifa privada simulada</strong> — uso demonstrativo e restrito a convidados. Ao participar, o usuário aceita o regulamento.
+  </div>
+</div>
 
 <script>
-const WEB_APP_BASE = "https://script.google.com/macros/s/AKfycbyKZOzLcYMTGCFVokdvdLw7xirI80swAM6tancoXbYlLcELxVOAQYMKcgT2r7WM52N1/exec";
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxl0oT1wwfRr4719tvSRtiSqCRoVTZKB2U-FbYQYTxmsdg89Qz_4jjWiP8nTqFvn-tH/exec';
+const PRIZE_PERCENT = 0.7;
+const salesKey = 'rifa_00_99_sales_v_sim';
+let sales = JSON.parse(localStorage.getItem(salesKey)||'[]');
+let mute = false;
 
-// Lê o parâmetro ?sheet=Rifa001 etc.
-function getSheetParam(){
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get("sheet") || "Rifa001";
-}
+document.getElementById('prizePercentText').textContent = Math.round(PRIZE_PERCENT*100)+'%';
 
-async function loadRaffle(){
-  const sheet = getSheetParam();
-  const url = `${WEB_APP_BASE}?sheet=${sheet}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  // Atualiza título e data
-  const raffleName = data.title || sheet;
-  const sorteio = data.sorteio ? `— Sorteio: ${data.sorteio}` : "";
-  document.getElementById("raffleInfo").textContent = `${raffleName} ${sorteio}`;
+/* ---------- Render Grid ---------- */
+async function renderGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
   
-  // Mostra números
-  const container = document.getElementById("numbers");
-  container.innerHTML = "";
+  // pega dados do Apps Script
+  try {
+    const resp = await fetch(WEB_APP_URL);
+    const json = await resp.json();
+    const items = json.items || [];
 
-  let paid = 0, reserved = 0, free = 0;
-  data.items.forEach(item=>{
-    const div = document.createElement("div");
-    const status = (item.STATUS || "Livre").toLowerCase();
-    div.className = `number ${status}`;
-    div.textContent = String(item.NÚMERO).padStart(2,"0");
-    container.appendChild(div);
+    sales = items.map(i=>({
+      number: String(i['NÚMERO']||i['number']).padStart(2,'0'),
+      email: i['E-MAIL']||i['email']||'',
+      phone: i['TELEFONE']||i['phone']||'',
+      paid: (i['STATUS']||i['status']||'').toLowerCase().includes('pago')
+    }));
+    localStorage.setItem(salesKey, JSON.stringify(sales));
 
-    if(status.includes("pago")) paid++;
-    else if(status.includes("reserv")) reserved++;
-    else free++;
-  });
+  } catch(err){ console.log('Erro fetch:', err); }
 
-  // Atualiza contadores
-  document.getElementById("paidCount").textContent = paid;
-  document.getElementById("reservedCount").textContent = reserved;
-  document.getElementById("freeCount").textContent = free;
+  for(let i=0;i<100;i++){
+    const n = String(i).padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'num';
+    const s = sales.find(x=>x.number===n);
+    if(s){
+      el.textContent = n + (s.paid?' • PAGO':' • RESERVADO');
+      el.classList.add(s.paid?'paid':'reserved');
+    } else {
+      el.textContent = n;
+      el.onclick = ()=>openReserve(n);
+    }
+    grid.appendChild(el);
+  }
+  renderSales();
+  updateStats();
 }
 
-// Atualiza a cada 20 s
-loadRaffle();
-setInterval(loadRaffle, 20000);
+/* ---------- Reserve flow ---------- */
+function openReserve(n){
+  const email = prompt(`Reservar número ${n}\nDigite seu e-mail:`,'');
+  if(!email) return;
+  const phone = prompt('Digite seu celular (somente números):','');
+  if(!phone) return;
+  
+  const item = { number:n, email, phone, status:'Reservado' };
+  sales.push({...item, paid:false});
+  localStorage.setItem(salesKey, JSON.stringify(sales));
+  fetch(WEB_APP_URL,{
+    method:'POST',
+    body: JSON.stringify(item),
+    headers:{ 'Content-Type':'application/json' }
+  }).catch(()=>{});
+  renderGrid();
+}
+
+function renderSales(){
+  const box = document.getElementById('salesList');
+  if(sales.length===0){ box.innerHTML='Nenhuma venda ainda.'; return; }
+  let html='<table><thead><tr><th>Nº</th><th>E-mail</th><th>Celular</th><th>Pago?</th></tr></thead><tbody>';
+  sales.slice().reverse().forEach(s=>{
+    html+=`<tr><td>${s.number}</td><td>${s.email}</td><td>${s.phone}</td><td>${s.paid?'SIM':'NÃO'}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  box.innerHTML=html;
+}
+
+function updateStats(){
+  const reserved = sales.length;
+  const paid = sales.filter(s=>s.paid).length;
+  const total = paid*10;
+  const prize = total*PRIZE_PERCENT;
+  document.getElementById('countReserved').textContent = reserved;
+  document.getElementById('countPaid').textContent = paid;
+  document.getElementById('totalArrecadado').textContent = `R$${total.toFixed(2).replace('.',',')}`;
+  document.getElementById('prizeAmount').textContent = `R$${prize.toFixed(2).replace('.',',')}`;
+}
+
+/* ---------- Init ---------- */
+renderGrid();
+setInterval(renderGrid,20000);
 </script>
 </body>
 </html>
