@@ -9,7 +9,7 @@
   --bg:#060607; --panel:#0f1013; --accent:#d4af37; --muted:#9aa4b2;
   --paid:#16c784; --reserved:#ffb84d; --text:#e6eef6;
 }
-body{margin:0;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:#060607;color:var(--text);padding:18px}
+body{margin:0;font-family:Arial,sans-serif;background:#060607;color:var(--text);padding:18px}
 .container{max-width:1150px;margin:0 auto}
 header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .logo{height:56px;border-radius:8px}
@@ -37,11 +37,8 @@ th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left
 <body>
 <div class="container">
   <header>
-    <img src="logo.jpg" alt="FTC Prêmios" class="logo" onerror="this.style.display='none'">
-    <div>
-      <h1>FTC Prêmios</h1>
-      <div class="sub">Rifa Nº001 — Números 00–99 • Valor: R$10,00 • Prêmio: <strong id="prizePercentText">70%</strong></div>
-    </div>
+    <h1>FTC Prêmios</h1>
+    <div class="sub">Rifa Nº001 — Números 00–99 • Valor: R$10,00 • Prêmio: <strong id="prizePercentText">70%</strong></div>
   </header>
 
   <div class="actions">
@@ -66,9 +63,6 @@ th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left
     </div>
   </div>
 
-  <div class="footer">
-    🔒 Rifa privada simulada — uso demonstrativo.
-  </div>
 </div>
 
 <!-- Modal Regulamento -->
@@ -103,9 +97,8 @@ th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left
 </div>
 
 <script>
-const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyKZOzLcYMTGCFVokdvdLw7xirI80swAM6tancoXbYlLcELxVOAQYMKcgT2r7WM52N1/exec';
-const ADMIN_PASS='8378';
 const PRIZE_PERCENT=0.7;
+const ADMIN_PASS='8378';
 let sales=[]; 
 let roletaInterval=null;
 
@@ -139,48 +132,4 @@ function renderGrid(){
   for(let i=0;i<100;i++){
     const n=String(i).padStart(2,'0');
     const el=document.createElement('div');
-    el.className='num';
-    el.textContent=n;
-    const s=sales.find(x=>x.number===n);
-    if(s){
-      el.classList.add(s.paid?'paid':'reserved');
-      el.textContent+= s.paid?' • PAGO':' • RESERVADO';
-      el.onclick=null;
-    }else{
-      el.onclick=()=>openReserve(n);
-    }
-    grid.appendChild(el);
-  }
-  updateStats();
-}
-
-/* ---------- Stats ---------- */
-function updateStats(){
-  const reserved=sales.length;
-  const paid=sales.filter(s=>s.paid).length;
-  const total=paid*10;
-  const prize=total*PRIZE_PERCENT;
-  document.getElementById('countReserved').textContent=reserved;
-  document.getElementById('countPaid').textContent=paid;
-  document.getElementById('totalArrecadado').textContent='R$'+total.toFixed(2).replace('.',',');
-  document.getElementById('prizeAmount').textContent='R$'+prize.toFixed(2).replace('.',',');
-}
-
-/* ---------- Admin ---------- */
-function openAdmin(){
-  const pass=prompt('Senha do organizador:');
-  if(pass!==ADMIN_PASS)return alert('Senha incorreta.');
-  alert('Painel do organizador: funcionalidade de marcar pagos e sortear.');
-}
-
-/* ---------- Roleta ---------- */
-function startRoleta(){
-  const pool=sales.filter(s=>s.paid).map(x=>x.number);
-  if(pool.length===0)return alert('Sem números pagos.');
-  const box=document.getElementById('roletaBox');
-  let step=0, totalSteps=300, currentSpeed=50;
-  roletaInterval=setInterval(()=>{
-    const pick=pool[Math.floor(Math.random()*pool.length)];
-    box.textContent=pick;
-    step++;
-    currentSpeed*=1.02; // desaceleração
+    el
