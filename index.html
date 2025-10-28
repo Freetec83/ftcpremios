@@ -3,133 +3,418 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FTC Prêmios — Rifa Nº001</title>
+<title>FTC Prêmios — Rifa Nº001 (Simulador)</title>
 <style>
 :root{
   --bg:#060607; --panel:#0f1013; --accent:#d4af37; --muted:#9aa4b2;
   --paid:#16c784; --reserved:#ffb84d; --text:#e6eef6;
 }
-body{margin:0;font-family:Arial,sans-serif;background:#060607;color:var(--text);padding:18px}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background:radial-gradient(circle at 10% 10%, #08060a 0%, #050505 60%);color:var(--text);padding:18px}
 .container{max-width:1150px;margin:0 auto}
 header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .logo{height:56px;border-radius:8px}
 h1{margin:0;font-size:20px}
 .sub{color:var(--muted);font-size:13px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-button{background:var(--accent);color:#061017;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.topright{margin-left:auto;text-align:right;color:var(--muted);font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin:18px 0}
 .num{background:linear-gradient(180deg,#101217 0%,#0b0f14 100%);padding:10px;border-radius:8px;text-align:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,0.6);font-weight:700;border:1px solid rgba(255,255,255,0.02);color:var(--text)}
 .num.reserved{background:linear-gradient(180deg,#3a2007,#4b2b09);color:#fff;cursor:not-allowed;border:1px solid rgba(0,0,0,0.4)}
 .num.paid{background:linear-gradient(180deg,#06311f,#074228);color:#eafff0;cursor:not-allowed;border:1px solid rgba(0,0,0,0.4)}
-.card{background:linear-gradient(180deg,#071018,#09121a);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);margin-bottom:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button{background:var(--accent);color:#061017;border:none;padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.card{background:linear-gradient(180deg,#071018,#09121a);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
 .small{font-size:13px;color:var(--muted)}
-.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.stat{background:linear-gradient(180deg,#08121a,#061018);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);min-width:140px;text-align:center}
-.roleta-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:14px}
-.roleta{width:360px;height:140px;background:radial-gradient(circle at 30% 10%, #2b0f00, #050609);border-radius:12px;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;letter-spacing:3px;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:4px solid rgba(212,175,55,0.06)}
+.stats{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:linear-gradient(180deg,#08121a,#061018);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);min-width:140px}
 .modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:9999}
 input,textarea{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--text);font-size:14px}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;font-size:13px;color:var(--muted)}
+.roleta-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+.roleta{width:360px;height:140px;background:radial-gradient(circle at 30% 10%, #2b0f00, #050609);border-radius:12px;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;letter-spacing:3px;box-shadow:0 10px 40px rgba(0,0,0,0.6);border:4px solid rgba(212,175,55,0.06)}
+.footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+.mute{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
+@media(max-width:820px){.grid{grid-template-columns:repeat(5,1fr)}.roleta{width:100%;height:110px;font-size:36px}}
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <h1>FTC Prêmios</h1>
-    <div class="sub">Rifa Nº001 — Números 00–99 • Valor: R$10,00 • Prêmio: <strong id="prizePercentText">70%</strong></div>
+    <img src="logo.jpg" alt="FTC Prêmios" class="logo" onerror="this.style.display='none'">
+    <div>
+      <h1>FTC Prêmios</h1>
+      <div class="sub">Rifa Nº001 — Números 00–99 • Valor por cota: R$10,00 • Prêmio: <strong id="prizePercentText">70%</strong></div>
+    </div>
+    <div class="topright">
+      <div class="small">Privado • Apenas convidados</div>
+      <div style="margin-top:6px" class="small" id="drawDateText">Sorteio: --/--/---- --:--</div>
+    </div>
   </header>
 
   <div class="actions">
     <button onclick="showReg()">📜 Regulamento</button>
     <button class="secondary" onclick="openAdmin()">🔐 Organizador</button>
+    <button class="secondary" onclick="exportCSV()">⤓ Exportar CSV</button>
+    <button onclick="window.open('https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt','_blank')">🔗 Entrar no grupo privado</button>
   </div>
 
   <div class="card stats">
-    <div class="stat"><strong id="countReserved">0</strong><div class="small">Reservados</div></div>
-    <div class="stat"><strong id="countPaid">0</strong><div class="small">Pagos</div></div>
-    <div class="stat"><strong id="totalArrecadado">R$0,00</strong><div class="small">Arrecadado</div></div>
-    <div class="stat"><strong id="prizeAmount">R$0,00</strong><div class="small">Prêmio (70%)</div></div>
+    <div class="stat"><strong id="countReserved">0</strong><div class="small">reservados</div></div>
+    <div class="stat"><strong id="countPaid">0</strong><div class="small">pagos</div></div>
+    <div class="stat"><strong id="totalArrecadado">R$0,00</strong><div class="small">arrecadado</div></div>
+    <div class="stat"><strong id="prizeAmount">R$0,00</strong><div class="small">prêmio (70%)</div></div>
+    <div style="margin-left:auto" class="stat"><button id="muteBtn" class="mute" onclick="toggleMute()">🔊 Desativar som</button></div>
+  </div>
+
+  <div class="card small" style="text-align:center;margin-bottom:12px">
+    Pagamentos combinados no grupo privado (WhatsApp). O organizador confirma manualmente os pagamentos.
   </div>
 
   <div class="grid" id="grid"></div>
 
-  <div class="roleta-wrap">
-    <div class="roleta" id="roletaBox">--</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button onclick="startRoleta()">▶️ Iniciar roleta</button>
-      <button class="secondary" onclick="stopRoleta()">⏹️ Parar</button>
-    </div>
+  <div class="card" id="salesBox">
+    <strong>Vendas / Reservas</strong>
+    <div id="salesList" style="margin-top:10px">Nenhuma venda ainda.</div>
   </div>
 
+  <div style="margin-top:14px" class="footer">
+    🔒 <strong>Rifa privada simulada</strong> — uso demonstrativo e restrito a convidados. Ao participar, o usuário aceita o regulamento.
+  </div>
 </div>
 
-<!-- Modal Regulamento -->
+<!-- Reserve Modal (email + telefone only) -->
+<div id="modalReserve" class="modal" style="display:none">
+  <div class="card" style="max-width:520px;width:94%">
+    <h3>Reservar número <span id="modalNum">--</span></h3>
+    <label>E-mail</label>
+    <input id="resEmail" placeholder="seu@email.com" type="email" />
+    <label>Celular (apenas números)</label>
+    <input id="resPhone" placeholder="21999998888">
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button onclick="confirmReserve()">Reservar</button>
+      <button class="secondary" onclick="closeReserve()">Cancelar</button>
+    </div>
+    <div id="afterReserve" style="display:none;margin-top:12px" class="small">
+      Reserva enviada. Entre no grupo privado e envie o comprovante ao organizador para confirmação.
+    </div>
+  </div>
+</div>
+
+<!-- Reg Modal -->
 <div id="modalReg" class="modal" style="display:none">
   <div class="card" style="max-width:720px;width:94%">
-    <h3>Regulamento</h3>
+    <h3>Regulamento (resumido)</h3>
     <p class="small">
       Rifa Nº001 — FTC Prêmios<br>
-      • Números: 00–99 • Valor: R$10,00<br>
+      • Números: 00–99 • Valor: R$10,00 por cota.<br>
       • Prêmio: 70% do total arrecadado.<br>
-      • Pagamento via grupo privado.<br>
-      • Sorteio público, vencedor registrado automaticamente.<br>
+      • Pagamento: via acordo no grupo privado (PIX). O organizador confirma manualmente após ver comprovante.<br>
+      • Sorteio: público, realizado pelo organizador no site; o vencedor será registrado.<br>
+      Ao participar, o usuário declara aceitar o regulamento.
     </p>
     <div style="text-align:right;margin-top:8px"><button onclick="closeReg()">Fechar</button></div>
   </div>
 </div>
 
-<!-- Modal Reserva -->
-<div id="modalReserve" class="modal" style="display:none">
-  <div class="card" style="max-width:500px;width:94%">
-    <h3>Reservar número <span id="modalNum">--</span></h3>
-    <label>E-mail</label>
-    <input id="resEmail" type="email" placeholder="seu@email.com"/>
-    <label>Celular</label>
-    <input id="resPhone" type="text" placeholder="21999998888"/>
-    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-      <button onclick="confirmReserve()">Reservar</button>
-      <button class="secondary" onclick="closeReserve()">Cancelar</button>
+<!-- Admin Modal -->
+<div id="modalAdmin" class="modal" style="display:none">
+  <div class="card" style="max-width:1000px;width:96%">
+    <h3>Painel do Organizador</h3>
+    <div class="small">Senha: <strong>8378</strong></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button onclick="fetchAndMergeFromSheet()">🔄 Sincronizar agora</button>
+      <button onclick="markAllPaid()">✔️ Marcar todos como pagos</button>
+      <button class="secondary" onclick="clearAll()">🗑️ Limpar local</button>
+      <button class="secondary" onclick="exportCSV()">⤓ Exportar CSV</button>
     </div>
-    <div id="afterReserve" style="display:none;margin-top:12px" class="small">Reserva enviada. Envie comprovante no grupo privado.</div>
+
+    <div style="margin-top:12px">
+      <label>Data/Hora do sorteio (DD/MM/YYYY HH:MM)</label>
+      <input id="drawDateInput" placeholder="25/11/2025 20:00">
+      <div style="margin-top:8px">
+        <button onclick="saveDrawDate()">Salvar</button>
+        <button class="secondary" onclick="clearDrawDate()">Limpar</button>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <strong>Reservas / Vendas (local)</strong>
+      <div id="adminSales" style="margin-top:8px"></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <strong>Sorteio — roleta (apenas pagos)</strong>
+      <div class="roleta-wrap" style="margin-top:8px">
+        <div class="roleta" id="roletaBox">--</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="startRoleta()">▶️ Iniciar roleta</button>
+          <button class="secondary" onclick="stopSpin()">⏹️ Parar</button>
+          <button onclick="finalizeManualWinner()">🏁 Registrar vencedor manual</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:10px"><button onclick="closeAdmin()">Fechar</button></div>
   </div>
 </div>
 
+<audio id="ping" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<audio id="spin" src="https://actions.google.com/sounds/v1/foley/slot_machine_spin.ogg"></audio>
+<audio id="stop" src="https://actions.google.com/sounds/v1/drums/crash.ogg"></audio>
+
 <script>
-const PRIZE_PERCENT=0.7;
-const ADMIN_PASS='8378';
-let sales=[]; 
-let roletaInterval=null;
+/* ========== CONFIG ========== */
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw-YH7H49FcMSByvxNh_ED0smGPEf98F63WP6FZyItECib_q_g1FMJ---h0g0__RmdD/exec';
+const SHEET_TAB_NAME = 'Rifa001';
+const ADMIN_PASS = '8378';
+const PRIZE_PERCENT = 0.70; // 70%
+const GROUP_LINK = 'https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt';
+/* =========================== */
 
-/* ---------- Modal Regulamento ---------- */
-function showReg(){ document.getElementById('modalReg').style.display='flex'; }
-function closeReg(){ document.getElementById('modalReg').style.display='none'; }
+document.getElementById('prizePercentText').textContent = Math.round(PRIZE_PERCENT*100) + '%';
 
-/* ---------- Modal Reserva ---------- */
-function openReserve(num){
-  document.getElementById('modalNum').textContent=num;
-  document.getElementById('resEmail').value='';
-  document.getElementById('resPhone').value='';
-  document.getElementById('afterReserve').style.display='none';
-  document.getElementById('modalReserve').style.display='flex';
-}
-function closeReserve(){ document.getElementById('modalReserve').style.display='none'; }
-function confirmReserve(){
-  const n=document.getElementById('modalNum').textContent;
-  const email=document.getElementById('resEmail').value.trim();
-  const phone=document.getElementById('resPhone').value.trim();
-  if(!email||!phone)return alert('Preencha e-mail e celular.');
-  sales.push({number:n,email,phone,paid:false});
-  renderGrid();
-  closeReserve();
-}
+const salesKey = 'rifa_00_99_sales_v_sim';
+let sales = JSON.parse(localStorage.getItem(salesKey) || '[]');
+let mute = false;
+let roletaInterval = null;
 
 /* ---------- Render Grid ---------- */
 function renderGrid(){
-  const grid=document.getElementById('grid');
-  grid.innerHTML='';
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
   for(let i=0;i<100;i++){
-    const n=String(i).padStart(2,'0');
-    const el=document.createElement('div');
-    el
+    const n = String(i).padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'num';
+    el.dataset.num = n;
+    const s = sales.find(x=>x.number===n);
+    if(s){
+      el.textContent = n + (s.paid ? ' • PAGO' : ' • RESERVADO');
+      el.classList.add(s.paid ? 'paid' : 'reserved');
+    } else {
+      el.textContent = n;
+      el.onclick = ()=> openReserve(n);
+    }
+    grid.appendChild(el);
+  }
+  renderSales();
+  updateStats();
+}
+
+/* ---------- Reserve flow (email + phone) ---------- */
+function openReserve(n){
+  document.getElementById('modalReserve').style.display='flex';
+  document.getElementById('modalNum').textContent = n;
+  document.getElementById('resEmail').value = '';
+  document.getElementById('resPhone').value = '';
+  document.getElementById('afterReserve').style.display='none';
+}
+function closeReserve(){ document.getElementById('modalReserve').style.display='none'; }
+
+function confirmReserve(){
+  const n = document.getElementById('modalNum').textContent;
+  const email = document.getElementById('resEmail').value.trim();
+  const phone = document.getElementById('resPhone').value.trim();
+  if(!email || !phone) return alert('Preencha e-mail e celular.');
+  const now = new Date().toISOString();
+  const item = { number: n, email, phone, date: now, paid: false };
+  sales.push(item);
+  localStorage.setItem(salesKey, JSON.stringify(sales));
+
+  // Best-effort backup to Web App (no-cors). If you want live shared state, ensure your Apps Script supports GET/POST.
+  try{ fetch(WEB_APP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({}, item, { status:'Reservado' })) }); }catch(e){}
+
+  renderGrid();
+  document.getElementById('afterReserve').style.display='block';
+  playPing();
+}
+
+/* ---------- Render sales list ---------- */
+function renderSales(){
+  const box = document.getElementById('salesList');
+  if(sales.length===0){ box.innerHTML = 'Nenhuma venda ainda.'; return; }
+  let html = '<table><thead><tr><th>Nº</th><th>E-mail</th><th>Celular</th><th>Pago?</th></tr></thead><tbody>';
+  sales.slice().reverse().forEach(s=>{
+    html += `<tr><td>${s.number}</td><td>${escapeHtml(s.email)}</td><td>${escapeHtml(s.phone)}</td><td>${s.paid? 'SIM' : 'NÃO'}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  box.innerHTML = html;
+}
+
+/* ---------- Stats ---------- */
+function updateStats(){
+  const reserved = sales.length;
+  const paid = sales.filter(s=>s.paid).length;
+  const total = paid * 10;
+  const prize = total * PRIZE_PERCENT;
+  document.getElementById('countReserved').textContent = reserved;
+  document.getElementById('countPaid').textContent = paid;
+  document.getElementById('totalArrecadado').textContent = formatMoney(total);
+  document.getElementById('prizeAmount').textContent = formatMoney(prize);
+}
+
+/* ---------- Admin ---------- */
+function openAdmin(){
+  const pass = prompt('Senha do organizador:');
+  if(pass !== ADMIN_PASS) return alert('Senha incorreta.');
+  document.getElementById('modalAdmin').style.display='flex';
+  renderAdminSales();
+  loadDrawDateToInput();
+}
+function closeAdmin(){ document.getElementById('modalAdmin').style.display='none'; }
+
+function renderAdminSales(){
+  const box = document.getElementById('adminSales');
+  if(sales.length===0){ box.innerHTML='Nenhuma venda.'; return; }
+  let html = '<table><thead><tr><th>Nº</th><th>E-mail</th><th>Celular</th><th>Pago</th><th>Ações</th></tr></thead><tbody>';
+  sales.forEach((s,idx)=>{
+    html += `<tr><td>${s.number}</td><td>${escapeHtml(s.email)}</td><td>${escapeHtml(s.phone)}</td><td>${s.paid? 'SIM' : 'NÃO'}</td>`+
+            `<td><button onclick="confirmPaid(${idx})">Confirmar Pago</button> <button class="secondary" onclick="cancelSale(${idx})">Cancelar</button></td></tr>`;
+  });
+  html += '</tbody></table>';
+  box.innerHTML = html;
+}
+
+function confirmPaid(idx){
+  sales[idx].paid = true;
+  localStorage.setItem(salesKey, JSON.stringify(sales));
+  // backup to Web App
+  try{ fetch(WEB_APP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({}, sales[idx], { status:'Pago' })) }); }catch(e){}
+  renderGrid(); renderAdminSales();
+}
+
+function cancelSale(idx){
+  if(!confirm('Remover essa reserva?')) return;
+  const removed = sales.splice(idx,1)[0];
+  localStorage.setItem(salesKey, JSON.stringify(sales));
+  try{ fetch(WEB_APP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({}, removed, { status:'Cancelado' })) }); }catch(e){}
+  renderGrid(); renderAdminSales();
+}
+
+function markAllPaid(){
+  if(!confirm('Marcar todas as reservas como pagas?')) return;
+  sales.forEach((s)=>{ s.paid=true; try{ fetch(WEB_APP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({}, s, { status:'Pago' })) }); }catch(e){} });
+  localStorage.setItem(salesKey, JSON.stringify(sales));
+  renderGrid(); renderAdminSales();
+}
+
+function clearAll(){
+  if(!confirm('Apagar todas as vendas e reservas locais?')) return;
+  sales = []; localStorage.removeItem(salesKey);
+  renderGrid(); renderAdminSales();
+}
+
+/* ---------- Draw date ---------- */
+function saveDrawDate(){
+  const v = document.getElementById('drawDateInput').value.trim();
+  if(!v) return alert('Digite data/hora no formato DD/MM/YYYY HH:MM');
+  localStorage.setItem('rifa_draw_date', v);
+  loadDrawDateToDisplay();
+  alert('Data salva.');
+}
+function clearDrawDate(){ localStorage.removeItem('rifa_draw_date'); loadDrawDateToDisplay(); alert('Data limpa.'); }
+function loadDrawDateToInput(){ document.getElementById('drawDateInput').value = localStorage.getItem('rifa_draw_date') || ''; }
+function loadDrawDateToDisplay(){ document.getElementById('drawDateText').textContent = 'Sorteio: ' + (localStorage.getItem('rifa_draw_date') || '--/--/---- --:--'); }
+loadDrawDateToDisplay();
+
+/* ---------- Roleta (sorteio) ---------- */
+function startRoleta(){
+  const pool = sales.filter(s=>s.paid).map(s=>s.number);
+  if(pool.length===0) return alert('Sem números pagos para sortear.');
+  const box = document.getElementById('roletaBox');
+  let steps = 60 + Math.floor(Math.random()*80);
+  let i = 0;
+  playSpin();
+  roletaInterval = setInterval(()=>{
+    const pick = pool[Math.floor(Math.random()*pool.length)];
+    box.textContent = pick;
+    i++;
+    if(i>=steps){ clearInterval(roletaInterval); stopSpin(); finalizeWinner(pick); }
+  }, 70);
+}
+
+function stopSpin(){ try{ document.getElementById('spin').pause(); document.getElementById('spin').currentTime=0; document.getElementById('stop').play().catch(()=>{}); }catch(e){} }
+
+function finalizeWinner(number){
+  const winner = sales.find(s=>s.number===number);
+  const now = new Date().toISOString();
+  const display = `Vencedor: ${number}` + (winner? ` — ${winner.email} (${maskPhone(winner.phone)})` : '');
+  alert(display + '\n\nO resultado será gravado (backup).');
+  if(winner){ winner.winner = true; localStorage.setItem(salesKey, JSON.stringify(sales)); renderGrid(); renderAdminSales(); }
+  const rec = { number, email: winner?winner.email:'', phone: winner?winner.phone:'', status: 'Vencedor', date: now, note: 'Sorteio realizado' };
+  try{ fetch(WEB_APP_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rec) }); }catch(e){}
+}
+
+/* manual finalizer (if you want to type a number) */
+function finalizeManualWinner(){
+  const n = prompt('Digite o número vencedor (ex: 07)');
+  if(!n) return;
+  finalizeWinner(String(n).padStart(2,'0'));
+}
+
+/* ---------- Sound / mute ---------- */
+function playPing(){ if(mute) return; document.getElementById('ping').play().catch(()=>{}); }
+function playSpin(){ if(mute) return; document.getElementById('spin').loop = true; document.getElementById('spin').play().catch(()=>{}); }
+function toggleMute(){ mute = !mute; document.getElementById('muteBtn').textContent = mute? '🔇 Som desativado' : '🔊 Desativar som'; if(mute) try{document.getElementById('spin').pause();}catch(e){} }
+
+/* ---------- Fetch & merge from sheet (GET) ---------- */
+async function fetchAndMergeFromSheet(){
+  if(!WEB_APP_URL || !WEB_APP_URL.includes('script.google.com')) return;
+  try{
+    const resp = await fetch(WEB_APP_URL);
+    if(!resp.ok) return;
+    const json = await resp.json();
+    if(!json || !Array.isArray(json.items) && !Array.isArray(json)) {
+      // some doGet return plain array — handle both
+      const items = Array.isArray(json.items) ? json.items : (Array.isArray(json) ? json : []);
+      mergeSheetItems(items);
+      localStorage.setItem(salesKey, JSON.stringify(sales));
+      renderGrid();
+      return;
+    }
+    const items = Array.isArray(json.items) ? json.items : json;
+    mergeSheetItems(items);
+    localStorage.setItem(salesKey, JSON.stringify(sales));
+    renderGrid();
+  }catch(e){
+    // network or CORS error — ignore silently (simulator will still work locally)
+  }
+}
+
+function mergeSheetItems(items){
+  items.forEach(item=>{
+    // expects columns like: Número | Status | Nome | Telefone OR Número | Nome | Celular | Status...
+    const numberRaw = item['Número'] || item['Number'] || item['numero'] || item['number'] || item['Número da Rifa'] || '';
+    const number = String(numberRaw).padStart(2,'0');
+    if(!number) return;
+    const email = item['E-mail'] || item['Email'] || item['email'] || item['Nome'] || item['Nome'] || '';
+    const phone = item['Celular'] || item['Telefone'] || item['phone'] || item['Telefone'] || '';
+    const statusRaw = (item['Status'] || item['status'] || item['Situação'] || '').toString().toLowerCase();
+    const paid = statusRaw.includes('pago') || statusRaw.includes('paid') || statusRaw.includes('confirmado');
+    const existing = sales.find(s=>s.number === number);
+    if(existing){
+      if(paid && !existing.paid){ existing.paid = true; existing.email = email || existing.email; existing.phone = phone || existing.phone; }
+    } else {
+      sales.push({ number, email: email||'', phone: phone||'', date: item['Data/Hora'] || new Date().toISOString(), paid });
+    }
+  });
+}
+
+// auto-sync now and every 20s
+fetchAndMergeFromSheet();
+setInterval(fetchAndMergeFromSheet, 20000);
+
+/* ---------- Utilities ---------- */
+function maskPhone(p){ if(!p) return ''; const s = String(p); return s.slice(0,4)+'****'+s.slice(-3); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatMoney(v){ return 'R$' + Number(v).toFixed(2).replace('.',','); }
+function quoteCsv(s){ return '"'+String(s).replace(/"/g,'""')+'"'; }
+function exportCSV(){ if(sales.length===0) return alert('Sem vendas para exportar.'); const header=['number','email','phone','date','paid']; const rows=[header.join(',')].concat(sales.map(s=>[s.number,quoteCsv(s.email),quoteCsv(s.phone),s.date,s.paid].join(','))); const csv = rows.join('\\n'); const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='vendas_rifa.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+/* ---------- Init ---------- */
+renderGrid();
+</script>
+</body>
+</html>
