@@ -1,106 +1,220 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel de Vendas da Rifa</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9fafb;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #ff6600;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 1.3em;
-      font-weight: bold;
-    }
-    form {
-      background: white;
-      max-width: 500px;
-      margin: 20px auto;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #ff6600;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      margin-top: 15px;
-      cursor: pointer;
-      width: 100%;
-      font-size: 1em;
-    }
-    button:hover {
-      background: #e65c00;
-    }
-    .numbers {
-      display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      gap: 5px;
-      max-width: 500px;
-      margin: 10px auto;
-    }
-    .number {
-      background: #eee;
-      border-radius: 5px;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .number.selected {
-      background: #ff6600;
-      color: white;
-      font-weight: bold;
-    }
-    .number.sold {
-      background: #ccc;
-      color: #666;
-      cursor: not-allowed;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIFA Nº</title>
+<style>
+:root {
+  --bg: #060607;
+  --panel: #0f1013;
+  --accent: #d4af37;
+  --muted: #9aa4b2;
+  --paid: #16c784;
+  --unpaid: #444;
+}
+body {
+  background: var(--bg);
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+header {
+  background: var(--panel);
+  padding: 1rem;
+  color: var(--accent);
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+#numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: .5rem;
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+.number {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: .7rem 0;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s;
+}
+.number:hover { background: var(--accent); color: #000; }
+.number.paid { background: var(--paid); color: #000; border-color: var(--paid); cursor: not-allowed; }
+#info {
+  background: var(--panel);
+  padding: .5rem;
+  margin-top: .5rem;
+  font-size: .9rem;
+  color: var(--muted);
+}
+button {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: .5rem 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s;
+}
+button:hover { opacity: 0.8; }
+
+/* Painel organizador */
+#organizerPanel {
+  display: none;
+  background: var(--panel);
+  color: var(--accent);
+  padding: 1rem;
+  border-top: 2px solid var(--accent);
+}
+#drawArea {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+input, textarea {
+  background: #111;
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: .3rem;
+  margin: .2rem 0;
+}
+</style>
 </head>
 <body>
+<header>RIFA Nº</header>
 
-<header>PAINEL DE VENDAS DA RIFA Nº <span id="raffleNumber">001</span></header>
+<div id="info">
+  Valor do número: <b>R$10,00</b> | Prêmio: <b>70% do total vendido</b>
+</div>
 
-<form id="raffleForm">
-  <label>Data do Sorteio:</label>
-  <input type="date" id="dataSorteio" required>
+<div id="numbers"></div>
 
-  <label>Horário:</label>
-  <input type="time" id="horario" required>
+<p><button onclick="openWhatsApp()">Ir para pagamento via WhatsApp</button></p>
 
-  <label>Vencedor(a):</label>
-  <input type="text" id="vencedor" placeholder="(deixe em branco até o sorteio)">
+<p><button onclick="openOrganizer()">Painel Organizador</button></p>
 
-  <label>Número Escolhido:</label>
-  <input type="text" id="numero" readonly required>
+<div id="organizerPanel">
+  <h3>PAINEL DE VENDAS DA RIFA Nº</h3>
+  <p>DATA DO SORTEIO: <input type="date" id="sorteioData"> HORÁRIO: <input type="time" id="sorteioHora"></p>
+  <p>VENCEDOR(A): <input type="text" id="winnerName" placeholder="Preencha após sorteio"></p>
+  <p><b>Total vendido:</b> R$<span id="totalSold">0</span></p>
+  <button onclick="startDraw()">Iniciar Sorteio (30s)</button>
+  <div id="drawArea"></div>
+  <hr>
+  <table border="1" style="width:100%; border-color:var(--accent); color:#fff; font-size:.9rem;">
+    <thead>
+      <tr><th>NÚMERO</th><th>STATUS</th><th>E-MAIL</th><th>TELEFONE</th><th>CÓDIGO DE VENDA</th></tr>
+    </thead>
+    <tbody id="salesTable"></tbody>
+  </table>
+</div>
 
-  <label>Status:</label>
-  <select id="status" required>
-    <option value="Reservado">Reservado</option>
-    <option value="Pago">Pago</option>
-  </select>
+<script>
+const TOTAL_NUMBERS = 51;
+const PRICE = 10;
+const PASSWORD = "8378";
+const whatsappLink = "https://chat.whatsapp.com/BnJBwDm5C0D5t2wiB6K0NC?mode=wwt";
 
-  <label>E
+let sales = JSON.parse(localStorage.getItem('rifaSales') || '{}');
+
+function renderNumbers() {
+  const container = document.getElementById('numbers');
+  container.innerHTML = '';
+  for (let i = 0; i < TOTAL_NUMBERS; i++) {
+    const num = i.toString().padStart(2, '0');
+    const div = document.createElement('div');
+    div.className = 'number' + (sales[num]?.paid ? ' paid' : '');
+    div.textContent = num;
+    div.onclick = () => selectNumber(num);
+    container.appendChild(div);
+  }
+  updateTotal();
+  renderTable();
+}
+
+function selectNumber(num) {
+  if (sales[num]?.paid) return alert('Este número já foi pago!');
+  const email = prompt('Digite seu e-mail:');
+  const tel = prompt('Digite seu telefone:');
+  sales[num] = { paid: false, email, tel, code: '' };
+  saveSales();
+  alert('Número reservado! Vá ao grupo do WhatsApp para confirmar o pagamento.');
+  openWhatsApp();
+  renderNumbers();
+}
+
+function openWhatsApp() { window.open(whatsappLink, '_blank'); }
+
+function openOrganizer() {
+  const pass = prompt('Digite a senha do organizador:');
+  if (pass === PASSWORD) {
+    document.getElementById('organizerPanel').style.display = 'block';
+  } else alert('Senha incorreta!');
+}
+
+function saveSales() {
+  localStorage.setItem('rifaSales', JSON.stringify(sales));
+}
+
+function updateTotal() {
+  const total = Object.values(sales).filter(s => s.paid).length * PRICE;
+  document.getElementById('totalSold').textContent = total;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('salesTable');
+  tbody.innerHTML = '';
+  Object.keys(sales).forEach(num => {
+    const s = sales[num];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${num}</td>
+      <td>${s.paid ? 'Pago' : 'Pendente'}</td>
+      <td>${s.email || ''}</td>
+      <td>${s.tel || ''}</td>
+      <td>${s.code || ''}</td>`;
+    tr.onclick = () => togglePaid(num);
+    tbody.appendChild(tr);
+  });
+}
+
+function togglePaid(num) {
+  if (!confirm(`Alterar status do número ${num}?`)) return;
+  const s = sales[num];
+  s.paid = !s.paid;
+  s.code = s.paid ? Math.random().toString(36).substring(2,8).toUpperCase() : '';
+  saveSales();
+  renderNumbers();
+}
+
+function startDraw() {
+  const paidNumbers = Object.keys(sales).filter(n => sales[n].paid);
+  if (paidNumbers.length === 0) return alert('Nenhum número pago.');
+  let counter = 30;
+  const area = document.getElementById('drawArea');
+  area.textContent = "Sorteando em 30 segundos...";
+  const timer = setInterval(() => {
+    counter--;
+    area.textContent = "Sorteando em " + counter + " segundos...";
+    if (counter <= 0) {
+      clearInterval(timer);
+      const winner = paidNumbers[Math.floor(Math.random() * paidNumbers.length)];
+      document.getElementById('winnerName').value = "Nº " + winner;
+      area.innerHTML = "<h2>🎉 Número sorteado: " + winner + " 🎉</h2>";
+    }
+  }, 1000);
+}
+
+renderNumbers();
+</script>
+</body>
+</html>
