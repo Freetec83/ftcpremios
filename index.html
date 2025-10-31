@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FTC Prêmios</title>
 <style>
+  /* Seu CSS original aqui */
   body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 10px;}
   .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2);}
   h1 { text-align: center; margin-bottom: 6px; }
@@ -12,13 +13,6 @@
   .info-group { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;}
   label { font-weight: bold; }
   input[type="date"], input[type="time"] { padding: 5px; font-size: 1rem; }
-  .num-button {
-    padding: 12px 0;
-    font-weight: bold;
-  }
-  .num-button.paid { background: #a6d785; color: #2b580c; cursor: default; }
-  .num-button.pending { background: #ffe998; cursor: pointer; }
-  .num-button.pending_payment { background: #ffcc66; color: #5a3b00; cursor: pointer; }
   table.numbers-table {
     width: 100%; 
     border-collapse: collapse; 
@@ -29,6 +23,7 @@
     border: 1px solid #ddd;
     padding: 12px 0;
     cursor: pointer;
+    font-size: 0.9rem;
   }
   table.numbers-table td.paid {
     background: #a6d785; color: #2b580c; cursor: default;
@@ -55,18 +50,16 @@
   footer { text-align: center; margin-top: 18px; color: #555; font-style: italic; }
   #loginPanel { max-width: 320px; margin: 20px auto; background: white; padding: 18px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2); }
   #loginPanel input { width: 100%; padding: 8px; font-size: 1rem; margin-top: 6px; }
-  #whatsappGroup {
-    max-width: 1000px; margin: 10px auto; padding: 0 20px;
-    text-align: center; font-size: 1.1rem; font-weight: bold;
-  }
-  #whatsappGroup a {
-    display: inline-block; background-color: #25D366; color: white; padding: 12px 25px;
-    border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem;
-  }
+  #whatsappGroup { max-width: 1000px; margin: 10px auto; padding: 0 20px; text-align: center; font-size: 1.1rem; font-weight: bold; }
+  #whatsappGroup a { display: inline-block; background-color: #25D366; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; }
   #phoneError { color: red; display: none; margin-top: 4px; }
 </style>
 </head>
 <body>
+
+  <!-- Conteúdo HTML (igual ao anterior) -->
+  <!-- loginPanel, mainContainer, números, modal, etc. -->
+
   <div id="loginPanel">
     <h2>Login do Organizador</h2>
     <label for="passwordInput">Senha:</label>
@@ -116,22 +109,17 @@
     </div>
   </div>
 
-  <!-- Tabela com os números -->
   <div class="container" aria-label="Números da Rifa - Visível sem login">
     <table class="numbers-table" aria-label="Tabela de números da rifa com status">
       <tbody id="numbersTableBody"></tbody>
     </table>
   </div>
 
-  <!-- Botão do grupo WhatsApp -->
   <div id="whatsappGroup">
     Participe do nosso grupo oficial no WhatsApp para mais informações!<br />
-    <a href="https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt" target="_blank" rel="noopener noreferrer" aria-label="Link para o grupo WhatsApp da rifa">
-      Entrar no grupo WhatsApp
-    </a>
+    <a href="https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt" target="_blank" rel="noopener noreferrer" aria-label="Link para o grupo WhatsApp da rifa">Entrar no grupo WhatsApp</a>
   </div>
 
-  <!-- Modal para reserva -->
   <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-content">
       <h3 id="modalTitle">Reservar Número <span id="selectedNumber"></span></h3>
@@ -149,113 +137,87 @@
 
   <audio id="drawSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAZGF0YQgAAAAA"></audio>
 
+  <!-- Firebase via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js"></script>
+
   <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDPbVECM-nqIMhDbiYA1cnnApwpNONVamg",
+      authDomain: "ftc-premios.firebaseapp.com",
+      projectId: "ftc-premios",
+      storageBucket: "ftc-premios.firebasestorage.app",
+      messagingSenderId: "366955454287",
+      appId: "1:366955454287:web:dd871826b8fae839706f3a",
+      measurementId: "G-3M7WJKPMPM"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const ticketPrice = 10;
-    const maxNumber = 50;
+    const maxNumber = 99;
     const prizePercent = 0.7;
     const panelPassword = "8378";
-    const organizerWhatsAppNumber = "5511999999999"; // insira seu número aqui no formato internacional sem '+'
+    const organizerWhatsAppNumber = "5511999999999";
 
     let tickets = [];
     let selectedNumber = null;
-    let winner = null;
     let drawingInProgress = false;
 
-    function initTickets() {
-      tickets = [];
-      for (let i = 1; i <= maxNumber; i++) {
-        tickets.push({
-          number: String(i).padStart(2, '0'),
-          status: 'pending', 
-          email: '',
-          phone: '',
-          code: ''
-        });
-      }
-    }
-
-    function updatePrize() {
-      const paidCount = tickets.filter(t => t.status === 'paid').length;
-      const prize = (paidCount * ticketPrice * prizePercent).toFixed(2);
-    }
-
-    function renderNumbersTable() {
-      const tbody = document.getElementById('numbersTableBody');
-      tbody.innerHTML = '';
-      let row;
-      tickets.forEach((t, i) => {
-        if (i % 5 === 0) {
-          row = document.createElement('tr');
-          tbody.appendChild(row);
-        }
-        const td = document.createElement('td');
-        td.textContent = t.number;
-        td.className = t.status;
-        if (t.status !== 'paid') {
-          td.tabIndex = 0;
-          td.role = 'button';
-          td.setAttribute('aria-pressed', 'false');
-          td.addEventListener('click', () => openModal(t.number));
-          td.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') openModal(t.number);
+    function listenTicketsRealtime() {
+      db.collection("tickets").onSnapshot(snapshot => {
+        tickets = [];
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          tickets.push({
+            number: docSnap.id,
+            status: data.status || 'pending',
+            email: data.email || '',
+            phone: data.phone || '',
+            code: data.code || ''
           });
+        });
+        for (let i=0; i<=maxNumber; i++) {
+          const numStr = i.toString().padStart(2,'0');
+          if (!tickets.find(t => t.number === numStr)) {
+            tickets.push({number: numStr, status:'pending', email:'', phone:'', code:''});
+          }
         }
-        row.appendChild(td);
-      });
-    }
-
-    function renderSalesPanel() {
-      const tbody = document.getElementById('salesPanel');
-      tbody.innerHTML = '';
-      tickets.forEach(t => {
-        const tr = document.createElement('tr');
-        const statusText = t.status === 'paid' ? 'Pago' : (t.status === 'pending_payment' ? 'Pagamento Pendente' : 'Disponível');
-        tr.innerHTML = `
-          <td>${t.number}</td>
-          <td>${statusText}</td>
-          <td>${t.email}</td>
-          <td>${t.phone}</td>
-          <td>${t.code}</td>
-          <td>${t.status === 'pending_payment' ? `<button onclick="confirmPayment('${t.number}')">Confirmar Pagamento</button>` : ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.confirmPayment = function(number) {
-      const t = tickets.find(x => x.number === number);
-      if (t && t.status === 'pending_payment') {
-        t.status = 'paid';
-        t.code = 'COD-'+number+'-'+Math.floor(1000 + Math.random()*9000);
-        renderSalesPanel();
+        tickets.sort((a,b) => a.number.localeCompare(b.number));
         renderNumbersTable();
+        renderSalesPanel();
         updatePrize();
-        alert(`Pagamento confirmado para número ${number}. Código de venda gerado: ${t.code}`);
-      }
-    };
+      });
+    }
+
+    async function saveTicketToFirestore(ticket) {
+      await db.collection('tickets').doc(ticket.number).set({
+        status: ticket.status,
+        email: ticket.email,
+        phone: ticket.phone,
+        code: ticket.code
+      }, {merge: true});
+    }
+
+    function validatePhone(phone) {
+      const cleaned = phone.replace(/D/g, '');
+      return cleaned.length === 10 || cleaned.length === 11;
+    }
 
     function openModal(number) {
       selectedNumber = number;
+      const ticket = tickets.find(t => t.number === number);
       document.getElementById('selectedNumber').textContent = number;
-      document.getElementById('emailInput').value = '';
-      document.getElementById('phoneInput').value = '';
+      document.getElementById('emailInput').value = ticket ? ticket.email : '';
+      document.getElementById('phoneInput').value = ticket ? ticket.phone : '';
       document.getElementById('phoneError').style.display = 'none';
       document.getElementById('modal').style.display = 'flex';
       document.getElementById('emailInput').focus();
     }
 
-    function closeModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-    function validatePhone(phone) {
-      const cleaned = phone.replace(/D/g, '');
-      return /^(d{10,11})$/.test(cleaned);
-    }
-
-    document.getElementById('cancelReserve').addEventListener('click', closeModal);
-
-    document.getElementById('confirmReserve').addEventListener('click', () => {
+    async function confirmReserve() {
       const emailInput = document.getElementById('emailInput');
       const phoneInput = document.getElementById('phoneInput');
       const email = emailInput.value.trim();
@@ -278,106 +240,163 @@
         t.email = email;
         t.phone = phone;
         t.status = 'pending_payment';
-        t.code = 'RES-' + selectedNumber + '-' + Math.floor(1000 + Math.random()*9000);
+        t.code = 'RES-' + selectedNumber + '-' + Math.floor(1000 + Math.random() * 9000);
+        await saveTicketToFirestore(t);
         closeModal();
         renderNumbersTable();
         renderSalesPanel();
         updatePrize();
 
-        const waMessage = encodeURIComponent(
-          `Olá, reservei o número ${selectedNumber} na Rifa. Código de reserva: ${t.code}. Email: ${email}.`
-        );
+        const waMessage = encodeURIComponent(`Olá, reservei o número ${selectedNumber} na Rifa. Código: ${t.code}. Email: ${email}.`);
         window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`, '_blank');
       }
-    });
+    }
 
-    document.getElementById('startDraw').addEventListener('click', () => {
-      const paidTickets = tickets.filter(t => t.status === 'paid');
-      if (paidTickets.length === 0) {
-        alert('Nenhum número pago disponível para sorteio.');
-        return;
-      }
-      if (drawingInProgress) return;
-      drawingInProgress = true;
-
-      const drawNumberEl = document.getElementById('drawNumber');
-      const winnerDisplay = document.getElementById('winnerDisplay');
-      let start = Date.now();
-      const duration = 30000;
-
-      const audio = document.getElementById('drawSound');
-      if (audio) {
-        try { audio.currentTime = 0; audio.loop = true; audio.play().catch(()=>{}); } catch(e) {}
-      }
-
-      const intervalId = setInterval(() => {
-        const randIndex = Math.floor(Math.random() * paidTickets.length);
-        drawNumberEl.textContent = paidTickets[randIndex].number;
-        if ((Date.now() - start) >= duration) {
-          clearInterval(intervalId);
-          winner = paidTickets[Math.floor(Math.random() * paidTickets.length)];
-          drawNumberEl.textContent = winner.number;
-          winnerDisplay.textContent = 'Número ' + winner.number + ' | Email: ' + winner.email + ' | Código: ' + winner.code;
-          drawingInProgress = false;
-
-          if (audio) {
-            try { audio.pause(); audio.currentTime = 0; } catch(e) {}
-          }
+    function renderNumbersTable() {
+      const tbody = document.getElementById('numbersTableBody');
+      tbody.innerHTML = '';
+      let row;
+      tickets.forEach((t, i) => {
+        if (i % 10 === 0) {
+          row = document.createElement('tr');
+          tbody.appendChild(row);
         }
-      }, 100);
-    });
+        const td = document.createElement('td');
+        td.textContent = t.number;
+        td.className = t.status;
+        if (t.status !== 'paid') {
+          td.tabIndex = 0;
+          td.role = 'button';
+          td.setAttribute('aria-pressed', 'false');
+          td.addEventListener('click', () => openModal(t.number));
+          td.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') openModal(t.number);
+          });
+        }
+        row.appendChild(td);
+      });
+    }
+
+    function renderSalesPanel() {
+      const tbody = document.getElementById('salesPanel');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      tickets.forEach(t => {
+        const statusText = t.status === 'paid' ? 'Pago' : (t.status === 'pending_payment' ? 'Pagamento Pendente' : 'Disponível');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${t.number}</td>
+          <td>${statusText}</td>
+          <td>${t.email}</td>
+          <td>${t.phone}</td>
+          <td>${t.code}</td>
+          <td>${t.status === 'pending_payment' ? `<button onclick="confirmPayment('${t.number}')">Confirmar Pagamento</button>` : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.confirmPayment = async function(number) {
+      const t = tickets.find(x => x.number === number);
+      if (t && t.status === 'pending_payment') {
+        t.status = 'paid';
+        t.code = 'COD-' + number + '-' + Math.floor(1000 + Math.random() * 9000);
+        await saveTicketToFirestore(t);
+        renderSalesPanel();
+        renderNumbersTable();
+        updatePrize();
+        alert(`Pagamento confirmado para número ${number}. Código de venda gerado: ${t.code}`);
+      }
+    };
+
+    function updatePrize() {
+      const paidCount = tickets.filter(t => t.status === 'paid').length;
+      const prize = (paidCount * ticketPrice * prizePercent).toFixed(2);
+      // Opcional: atualizar UI aqui
+    }
+
+    async function askPasswordAndRun(fn) {
+      const pass = prompt('Insira a senha do organizador:');
+      if (pass === panelPassword) {
+        await fn();
+      } else {
+        alert('Senha incorreta!');
+      }
+    }
 
     document.getElementById('btnReset').addEventListener('click', () => {
-      if (confirm('Deseja realmente resetar a rifa? Todos os números voltarão a estar disponíveis.')) {
-        initTickets();
-        renderNumbersTable();
-        renderSalesPanel();
+      askPasswordAndRun(async () => {
+        if (!confirm('Deseja realmente resetar a rifa? Todos os números voltarão a estar disponíveis.')) return;
+        for (const t of tickets) {
+          t.status = 'pending';
+          t.email = '';
+          t.phone = '';
+          t.code = '';
+          await saveTicketToFirestore(t);
+        }
+        drawingInProgress = false;
         document.getElementById('winnerDisplay').textContent = '--';
         document.getElementById('drawNumber').textContent = '--';
-        updatePrize();
-      }
+      });
     });
 
     document.getElementById('btnNovaRifa').addEventListener('click', () => {
-      if (confirm('Iniciar uma nova rifA redefinindo dados atuais?')) {
-        initTickets();
-        winner = null;
+      askPasswordAndRun(async () => {
+        if (!confirm('Iniciar uma nova rifa redefinindo dados atuais?')) return;
+        for (const t of tickets) {
+          t.status = 'pending';
+          t.email = '';
+          t.phone = '';
+          t.code = '';
+          await saveTicketToFirestore(t);
+        }
+        drawingInProgress = false;
         document.getElementById('winnerDisplay').textContent = '--';
         document.getElementById('drawNumber').textContent = '--';
-        renderNumbersTable();
-        renderSalesPanel();
-        updatePrize();
-      }
+      });
     });
 
-    document.getElementById('btnLogin').addEventListener('click', () => {
-      const pass = document.getElementById('passwordInput').value.trim();
-      if (pass === panelPassword) {
-        document.getElementById('loginPanel').style.display = 'none';
-        document.getElementById('mainContainer').style.display = 'block';
-        initTickets();
-        renderNumbersTable();
-        renderSalesPanel();
-      } else {
-        const errorEl = document.getElementById('loginError');
-        errorEl.style.display = 'block';
-        setTimeout(() => errorEl.style.display = 'none', 3000);
-      }
+    document.getElementById('startDraw').addEventListener('click', () => {
+      askPasswordAndRun(() => {
+        const paidTickets = tickets.filter(t => t.status === 'paid');
+        if (paidTickets.length === 0) {
+          alert('Nenhum número pago disponível para sorteio.');
+          return;
+        }
+        if (drawingInProgress) return;
+        drawingInProgress = true;
+
+        const drawNumberEl = document.getElementById('drawNumber');
+        const winnerDisplay = document.getElementById('winnerDisplay');
+        let start = Date.now();
+        const duration = 30000;
+
+        const audio = document.getElementById('drawSound');
+        if (audio) {
+          try { audio.currentTime = 0; audio.loop = true; audio.play().catch(() => {}); } catch (e) {}
+        }
+
+        const intervalId = setInterval(() => {
+          const randIndex = Math.floor(Math.random() * paidTickets.length);
+          drawNumberEl.textContent = paidTickets[randIndex].number;
+          if ((Date.now() - start) >= duration) {
+            clearInterval(intervalId);
+            const winner = paidTickets[Math.floor(Math.random() * paidTickets.length)];
+            drawNumberEl.textContent = winner.number;
+            winnerDisplay.textContent = `Número ${winner.number} | Email: ${winner.email} | Código: ${winner.code}`;
+            drawingInProgress = false;
+            if (audio) {
+              try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+            }
+          }
+        }, 100);
+      });
     });
 
-    const titleInput = document.getElementById('titleRifa');
-    titleInput.addEventListener('input', () => {
-      document.querySelector('.container h1').textContent = 'FTC Prêmios';
-    });
+    listenTicketsRealtime();
 
-    const footerEl = document.createElement('footer');
-    footerEl.textContent = 'A sorte é para todos que se preparam e não desistem. Esteja pronto, a sua hora pode estar chegando!';
-    document.body.appendChild(footerEl);
-
-    initTickets();
-    renderNumbersTable();
-    renderSalesPanel();
-    updatePrize();
+    document.getElementById('confirmReserve').addEventListener('click', confirmReserve);
+    document.getElementById('cancelReserve').addEventListener('click', closeModal);
   </script>
 </body>
 </html>
