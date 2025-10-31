@@ -1,220 +1,383 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RIFA Nº</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FTC Prêmios</title>
 <style>
-:root {
-  --bg: #060607;
-  --panel: #0f1013;
-  --accent: #d4af37;
-  --muted: #9aa4b2;
-  --paid: #16c784;
-  --unpaid: #444;
-}
-body {
-  background: var(--bg);
-  color: #fff;
-  font-family: "Segoe UI", sans-serif;
-  margin: 0;
-  padding: 0;
-  text-align: center;
-}
-header {
-  background: var(--panel);
-  padding: 1rem;
-  color: var(--accent);
-  font-size: 1.5rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-#numbers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: .5rem;
-  padding: 1rem;
-  max-width: 600px;
-  margin: auto;
-}
-.number {
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: .7rem 0;
-  font-weight: bold;
-  cursor: pointer;
-  transition: .2s;
-}
-.number:hover { background: var(--accent); color: #000; }
-.number.paid { background: var(--paid); color: #000; border-color: var(--paid); cursor: not-allowed; }
-#info {
-  background: var(--panel);
-  padding: .5rem;
-  margin-top: .5rem;
-  font-size: .9rem;
-  color: var(--muted);
-}
-button {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  border-radius: 8px;
-  padding: .5rem 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: .2s;
-}
-button:hover { opacity: 0.8; }
-
-/* Painel organizador */
-#organizerPanel {
-  display: none;
-  background: var(--panel);
-  color: var(--accent);
-  padding: 1rem;
-  border-top: 2px solid var(--accent);
-}
-#drawArea {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-  color: var(--accent);
-}
-input, textarea {
-  background: #111;
-  color: #fff;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: .3rem;
-  margin: .2rem 0;
-}
+  body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 10px;}
+  .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2);}
+  h1 { text-align: center; margin-bottom: 6px; }
+  #titleRifa { display: block; width: 100%; text-align: center; font-size: 1.75rem; padding: 6px 0; border: none; outline: none; background: transparent; }
+  .info-group { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;}
+  label { font-weight: bold; }
+  input[type="date"], input[type="time"] { padding: 5px; font-size: 1rem; }
+  .num-button {
+    padding: 12px 0;
+    font-weight: bold;
+  }
+  .num-button.paid { background: #a6d785; color: #2b580c; cursor: default; }
+  .num-button.pending { background: #ffe998; cursor: pointer; }
+  .num-button.pending_payment { background: #ffcc66; color: #5a3b00; cursor: pointer; }
+  table.numbers-table {
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  table.numbers-table td {
+    border: 1px solid #ddd;
+    padding: 12px 0;
+    cursor: pointer;
+  }
+  table.numbers-table td.paid {
+    background: #a6d785; color: #2b580c; cursor: default;
+  }
+  table.numbers-table td.pending_payment {
+    background: #ffcc66; color: #5a3b00;
+  }
+  table.numbers-table td.pending {
+    background: #ffe998;
+  }
+  #modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+  .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 420px; width: 90%; }
+  .modal-content h3 { margin-top: 0; }
+  .modal-content label { display: block; margin: 10px 0 5px; }
+  .modal-content input { width: 100%; padding: 6px; font-size: 1rem; }
+  .buttons { margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; }
+  button { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+  button.primary { background-color: #007bff; color: white; }
+  button.secondary { background-color: #bbb; color: black; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 0.9rem; }
+  .draw-section { text-align: center; margin-top: 16px; padding: 14px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; }
+  #drawNumber { font-size: 52px; font-weight: bold; margin-top: 6px; }
+  footer { text-align: center; margin-top: 18px; color: #555; font-style: italic; }
+  #loginPanel { max-width: 320px; margin: 20px auto; background: white; padding: 18px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2); }
+  #loginPanel input { width: 100%; padding: 8px; font-size: 1rem; margin-top: 6px; }
+  #whatsappGroup {
+    max-width: 1000px; margin: 10px auto; padding: 0 20px;
+    text-align: center; font-size: 1.1rem; font-weight: bold;
+  }
+  #whatsappGroup a {
+    display: inline-block; background-color: #25D366; color: white; padding: 12px 25px;
+    border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem;
+  }
+  #phoneError { color: red; display: none; margin-top: 4px; }
 </style>
 </head>
 <body>
-<header>RIFA Nº</header>
+  <div id="loginPanel">
+    <h2>Login do Organizador</h2>
+    <label for="passwordInput">Senha:</label>
+    <input type="password" id="passwordInput" />
+    <button id="btnLogin" class="primary" style="width:100%; margin-top:8px;">Entrar</button>
+    <div id="loginError" style="color: red; display:none; margin-top:10px;">Senha incorreta.</div>
+  </div>
 
-<div id="info">
-  Valor do número: <b>R$10,00</b> | Prêmio: <b>70% do total vendido</b>
-</div>
+  <div class="container" id="mainContainer" style="display:none;">
+    <h1>FTC Prêmios</h1>
+    <div class="info-group" aria-label="Título editável">
+      <span style="flex:1; text-align:left; font-weight:bold;">PAINEL DE VENDAS DA RIFA N°</span>
+      <input id="titleRifa" value="01" aria-label="Título após N°" />
+    </div>
 
-<div id="numbers"></div>
+    <div class="info-group" aria-label="Detalhes do sorteio">
+      <div style="flex:1;"><strong>DATA DO SORTEIO:</strong> <input type="date" id="drawDate" /></div>
+      <div style="flex:1;"><strong>HORÁRIO:</strong> <input type="time" id="drawTime" /></div>
+    </div>
 
-<p><button onclick="openWhatsApp()">Ir para pagamento via WhatsApp</button></p>
+    <div class="info-group" aria-label="Vencedor">
+      <div><strong>VENCEDOR(A):</strong> <span id="winnerDisplay">--</span></div>
+    </div>
 
-<p><button onclick="openOrganizer()">Painel Organizador</button></p>
+    <table aria-label="Tabela de vendas">
+      <thead>
+        <tr>
+          <th>NÚMERO</th>
+          <th>STATUS</th>
+          <th>E-MAIL</th>
+          <th>TELEFONE</th>
+          <th>CÓDIGO DE VENDA</th>
+          <th>AÇÃO</th>
+        </tr>
+      </thead>
+      <tbody id="salesPanel"></tbody>
+    </table>
 
-<div id="organizerPanel">
-  <h3>PAINEL DE VENDAS DA RIFA Nº</h3>
-  <p>DATA DO SORTEIO: <input type="date" id="sorteioData"> HORÁRIO: <input type="time" id="sorteioHora"></p>
-  <p>VENCEDOR(A): <input type="text" id="winnerName" placeholder="Preencha após sorteio"></p>
-  <p><b>Total vendido:</b> R$<span id="totalSold">0</span></p>
-  <button onclick="startDraw()">Iniciar Sorteio (30s)</button>
-  <div id="drawArea"></div>
-  <hr>
-  <table border="1" style="width:100%; border-color:var(--accent); color:#fff; font-size:.9rem;">
-    <thead>
-      <tr><th>NÚMERO</th><th>STATUS</th><th>E-MAIL</th><th>TELEFONE</th><th>CÓDIGO DE VENDA</th></tr>
-    </thead>
-    <tbody id="salesTable"></tbody>
-  </table>
-</div>
+    <div class="draw-section" aria-label="Sorteio">
+      <button id="startDraw" class="primary" aria-label="Iniciar sorteio">Sortear Número</button>
+      <div id="drawNumber" aria-live="polite" aria-atomic="true">--</div>
+    </div>
 
-<script>
-const TOTAL_NUMBERS = 51;
-const PRICE = 10;
-const PASSWORD = "8378";
-const whatsappLink = "https://chat.whatsapp.com/BnJBwDm5C0D5t2wiB6K0NC?mode=wwt";
+    <div style="display:flex; justify-content: space-between; gap: 10px; margin-top: 12px;">
+      <button id="btnReset" class="secondary" style="flex:1;">Resetar Rifa</button>
+      <button id="btnNovaRifa" class="primary" style="flex:1;">Nova Rifa</button>
+    </div>
+  </div>
 
-let sales = JSON.parse(localStorage.getItem('rifaSales') || '{}');
+  <!-- Tabela com os números -->
+  <div class="container" aria-label="Números da Rifa - Visível sem login">
+    <table class="numbers-table" aria-label="Tabela de números da rifa com status">
+      <tbody id="numbersTableBody"></tbody>
+    </table>
+  </div>
 
-function renderNumbers() {
-  const container = document.getElementById('numbers');
-  container.innerHTML = '';
-  for (let i = 0; i < TOTAL_NUMBERS; i++) {
-    const num = i.toString().padStart(2, '0');
-    const div = document.createElement('div');
-    div.className = 'number' + (sales[num]?.paid ? ' paid' : '');
-    div.textContent = num;
-    div.onclick = () => selectNumber(num);
-    container.appendChild(div);
-  }
-  updateTotal();
-  renderTable();
-}
+  <!-- Botão do grupo WhatsApp -->
+  <div id="whatsappGroup">
+    Participe do nosso grupo oficial no WhatsApp para mais informações!<br />
+    <a href="https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt" target="_blank" rel="noopener noreferrer" aria-label="Link para o grupo WhatsApp da rifa">
+      Entrar no grupo WhatsApp
+    </a>
+  </div>
 
-function selectNumber(num) {
-  if (sales[num]?.paid) return alert('Este número já foi pago!');
-  const email = prompt('Digite seu e-mail:');
-  const tel = prompt('Digite seu telefone:');
-  sales[num] = { paid: false, email, tel, code: '' };
-  saveSales();
-  alert('Número reservado! Vá ao grupo do WhatsApp para confirmar o pagamento.');
-  openWhatsApp();
-  renderNumbers();
-}
+  <!-- Modal para reserva -->
+  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <h3 id="modalTitle">Reservar Número <span id="selectedNumber"></span></h3>
+      <label for="emailInput">E-mail:</label>
+      <input type="email" id="emailInput" required />
+      <label for="phoneInput">Telefone:</label>
+      <input type="tel" id="phoneInput" placeholder="(99) 99999-9999" required />
+      <div id="phoneError">Telefone inválido. Use 10 ou 11 números.</div>
+      <div class="buttons">
+        <button class="primary" id="confirmReserve">Confirmar</button>
+        <button class="secondary" id="cancelReserve">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
-function openWhatsApp() { window.open(whatsappLink, '_blank'); }
+  <audio id="drawSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAZGF0YQgAAAAA"></audio>
 
-function openOrganizer() {
-  const pass = prompt('Digite a senha do organizador:');
-  if (pass === PASSWORD) {
-    document.getElementById('organizerPanel').style.display = 'block';
-  } else alert('Senha incorreta!');
-}
+  <script>
+    const ticketPrice = 10;
+    const maxNumber = 50;
+    const prizePercent = 0.7;
+    const panelPassword = "8378";
+    const organizerWhatsAppNumber = "5511999999999"; // insira seu número aqui no formato internacional sem '+'
 
-function saveSales() {
-  localStorage.setItem('rifaSales', JSON.stringify(sales));
-}
+    let tickets = [];
+    let selectedNumber = null;
+    let winner = null;
+    let drawingInProgress = false;
 
-function updateTotal() {
-  const total = Object.values(sales).filter(s => s.paid).length * PRICE;
-  document.getElementById('totalSold').textContent = total;
-}
-
-function renderTable() {
-  const tbody = document.getElementById('salesTable');
-  tbody.innerHTML = '';
-  Object.keys(sales).forEach(num => {
-    const s = sales[num];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${num}</td>
-      <td>${s.paid ? 'Pago' : 'Pendente'}</td>
-      <td>${s.email || ''}</td>
-      <td>${s.tel || ''}</td>
-      <td>${s.code || ''}</td>`;
-    tr.onclick = () => togglePaid(num);
-    tbody.appendChild(tr);
-  });
-}
-
-function togglePaid(num) {
-  if (!confirm(`Alterar status do número ${num}?`)) return;
-  const s = sales[num];
-  s.paid = !s.paid;
-  s.code = s.paid ? Math.random().toString(36).substring(2,8).toUpperCase() : '';
-  saveSales();
-  renderNumbers();
-}
-
-function startDraw() {
-  const paidNumbers = Object.keys(sales).filter(n => sales[n].paid);
-  if (paidNumbers.length === 0) return alert('Nenhum número pago.');
-  let counter = 30;
-  const area = document.getElementById('drawArea');
-  area.textContent = "Sorteando em 30 segundos...";
-  const timer = setInterval(() => {
-    counter--;
-    area.textContent = "Sorteando em " + counter + " segundos...";
-    if (counter <= 0) {
-      clearInterval(timer);
-      const winner = paidNumbers[Math.floor(Math.random() * paidNumbers.length)];
-      document.getElementById('winnerName').value = "Nº " + winner;
-      area.innerHTML = "<h2>🎉 Número sorteado: " + winner + " 🎉</h2>";
+    function initTickets() {
+      tickets = [];
+      for (let i = 1; i <= maxNumber; i++) {
+        tickets.push({
+          number: String(i).padStart(2, '0'),
+          status: 'pending', 
+          email: '',
+          phone: '',
+          code: ''
+        });
+      }
     }
-  }, 1000);
-}
 
-renderNumbers();
-</script>
+    function updatePrize() {
+      const paidCount = tickets.filter(t => t.status === 'paid').length;
+      const prize = (paidCount * ticketPrice * prizePercent).toFixed(2);
+    }
+
+    function renderNumbersTable() {
+      const tbody = document.getElementById('numbersTableBody');
+      tbody.innerHTML = '';
+      let row;
+      tickets.forEach((t, i) => {
+        if (i % 5 === 0) {
+          row = document.createElement('tr');
+          tbody.appendChild(row);
+        }
+        const td = document.createElement('td');
+        td.textContent = t.number;
+        td.className = t.status;
+        if (t.status !== 'paid') {
+          td.tabIndex = 0;
+          td.role = 'button';
+          td.setAttribute('aria-pressed', 'false');
+          td.addEventListener('click', () => openModal(t.number));
+          td.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') openModal(t.number);
+          });
+        }
+        row.appendChild(td);
+      });
+    }
+
+    function renderSalesPanel() {
+      const tbody = document.getElementById('salesPanel');
+      tbody.innerHTML = '';
+      tickets.forEach(t => {
+        const tr = document.createElement('tr');
+        const statusText = t.status === 'paid' ? 'Pago' : (t.status === 'pending_payment' ? 'Pagamento Pendente' : 'Disponível');
+        tr.innerHTML = `
+          <td>${t.number}</td>
+          <td>${statusText}</td>
+          <td>${t.email}</td>
+          <td>${t.phone}</td>
+          <td>${t.code}</td>
+          <td>${t.status === 'pending_payment' ? `<button onclick="confirmPayment('${t.number}')">Confirmar Pagamento</button>` : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.confirmPayment = function(number) {
+      const t = tickets.find(x => x.number === number);
+      if (t && t.status === 'pending_payment') {
+        t.status = 'paid';
+        t.code = 'COD-'+number+'-'+Math.floor(1000 + Math.random()*9000);
+        renderSalesPanel();
+        renderNumbersTable();
+        updatePrize();
+        alert(`Pagamento confirmado para número ${number}. Código de venda gerado: ${t.code}`);
+      }
+    };
+
+    function openModal(number) {
+      selectedNumber = number;
+      document.getElementById('selectedNumber').textContent = number;
+      document.getElementById('emailInput').value = '';
+      document.getElementById('phoneInput').value = '';
+      document.getElementById('phoneError').style.display = 'none';
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('emailInput').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    function validatePhone(phone) {
+      const cleaned = phone.replace(/D/g, '');
+      return /^(d{10,11})$/.test(cleaned);
+    }
+
+    document.getElementById('cancelReserve').addEventListener('click', closeModal);
+
+    document.getElementById('confirmReserve').addEventListener('click', () => {
+      const emailInput = document.getElementById('emailInput');
+      const phoneInput = document.getElementById('phoneInput');
+      const email = emailInput.value.trim();
+      const phone = phoneInput.value.trim();
+
+      if (!emailInput.checkValidity()) {
+        alert('Por favor, informe um e-mail válido.');
+        emailInput.focus();
+        return;
+      }
+      if (!validatePhone(phone)) {
+        document.getElementById('phoneError').style.display = 'block';
+        phoneInput.focus();
+        return;
+      }
+      document.getElementById('phoneError').style.display = 'none';
+
+      const t = tickets.find(ticket => ticket.number === selectedNumber);
+      if (t && t.status === 'pending') {
+        t.email = email;
+        t.phone = phone;
+        t.status = 'pending_payment';
+        t.code = 'RES-' + selectedNumber + '-' + Math.floor(1000 + Math.random()*9000);
+        closeModal();
+        renderNumbersTable();
+        renderSalesPanel();
+        updatePrize();
+
+        const waMessage = encodeURIComponent(
+          `Olá, reservei o número ${selectedNumber} na Rifa. Código de reserva: ${t.code}. Email: ${email}.`
+        );
+        window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`, '_blank');
+      }
+    });
+
+    document.getElementById('startDraw').addEventListener('click', () => {
+      const paidTickets = tickets.filter(t => t.status === 'paid');
+      if (paidTickets.length === 0) {
+        alert('Nenhum número pago disponível para sorteio.');
+        return;
+      }
+      if (drawingInProgress) return;
+      drawingInProgress = true;
+
+      const drawNumberEl = document.getElementById('drawNumber');
+      const winnerDisplay = document.getElementById('winnerDisplay');
+      let start = Date.now();
+      const duration = 30000;
+
+      const audio = document.getElementById('drawSound');
+      if (audio) {
+        try { audio.currentTime = 0; audio.loop = true; audio.play().catch(()=>{}); } catch(e) {}
+      }
+
+      const intervalId = setInterval(() => {
+        const randIndex = Math.floor(Math.random() * paidTickets.length);
+        drawNumberEl.textContent = paidTickets[randIndex].number;
+        if ((Date.now() - start) >= duration) {
+          clearInterval(intervalId);
+          winner = paidTickets[Math.floor(Math.random() * paidTickets.length)];
+          drawNumberEl.textContent = winner.number;
+          winnerDisplay.textContent = 'Número ' + winner.number + ' | Email: ' + winner.email + ' | Código: ' + winner.code;
+          drawingInProgress = false;
+
+          if (audio) {
+            try { audio.pause(); audio.currentTime = 0; } catch(e) {}
+          }
+        }
+      }, 100);
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if (confirm('Deseja realmente resetar a rifa? Todos os números voltarão a estar disponíveis.')) {
+        initTickets();
+        renderNumbersTable();
+        renderSalesPanel();
+        document.getElementById('winnerDisplay').textContent = '--';
+        document.getElementById('drawNumber').textContent = '--';
+        updatePrize();
+      }
+    });
+
+    document.getElementById('btnNovaRifa').addEventListener('click', () => {
+      if (confirm('Iniciar uma nova rifA redefinindo dados atuais?')) {
+        initTickets();
+        winner = null;
+        document.getElementById('winnerDisplay').textContent = '--';
+        document.getElementById('drawNumber').textContent = '--';
+        renderNumbersTable();
+        renderSalesPanel();
+        updatePrize();
+      }
+    });
+
+    document.getElementById('btnLogin').addEventListener('click', () => {
+      const pass = document.getElementById('passwordInput').value.trim();
+      if (pass === panelPassword) {
+        document.getElementById('loginPanel').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'block';
+        initTickets();
+        renderNumbersTable();
+        renderSalesPanel();
+      } else {
+        const errorEl = document.getElementById('loginError');
+        errorEl.style.display = 'block';
+        setTimeout(() => errorEl.style.display = 'none', 3000);
+      }
+    });
+
+    const titleInput = document.getElementById('titleRifa');
+    titleInput.addEventListener('input', () => {
+      document.querySelector('.container h1').textContent = 'FTC Prêmios';
+    });
+
+    const footerEl = document.createElement('footer');
+    footerEl.textContent = 'A sorte é para todos que se preparam e não desistem. Esteja pronto, a sua hora pode estar chegando!';
+    document.body.appendChild(footerEl);
+
+    initTickets();
+    renderNumbersTable();
+    renderSalesPanel();
+    updatePrize();
+  </script>
 </body>
 </html>
