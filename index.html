@@ -153,11 +153,8 @@
   const ticketPrice = 10.00;
   const maxNumber = 99;
   const panelPassword = "8378";
-  // seu link do grupo (fornecido por você)
   const whatsGroupLink = "https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt";
-  // se quiser que a mensagem também seja aberta para um número individual automaticamente,
-  // coloque aqui (ex: '5511999999999'). Se ficar vazio (''), não abrirá wa.me.
-  let organizerWhatsAppNumber = ""; // opcional: número do organizador (sem +)
+  let organizerWhatsAppNumber = "";
 
   // ===== UI refs =====
   const numbersTable = document.getElementById('numbersTable');
@@ -186,12 +183,18 @@
   ticketPriceDisplay.textContent = ticketPrice.toFixed(2);
   whatsLink.href = whatsGroupLink;
 
-  // ===== estado local =====
-  let tickets = []; // array de objetos {number,status,name,email,phone,code}
-  let selectedNumber = null;
-  let organizerAuthenticated = false;
-  let lastWinner = null;
-  let drawCount = 0;
+  // ===== Funções para salvar e carregar no LocalStorage =====
+  function saveTicketsToLocalStorage(tickets) {
+    localStorage.setItem('rifaTickets', JSON.stringify(tickets));
+  }
+
+  function loadTicketsFromLocalStorage() {
+    const saved = localStorage.getItem('rifaTickets');
+    return saved ? JSON.parse(saved) : null;
+  }
+
+  // ===== Estado local =====
+  let tickets = loadTicketsFromLocalStorage() || [];
 
   // ===== util =====
   function formatNum(i){ return String(i).padStart(2,'0'); }
@@ -354,21 +357,22 @@
         name, email, phone, code
       }, { merge: true });
 
-      const waMessage = `🎟️ Nova reserva na Rifa FTC Prêmios!\nNúmero: ${selectedNumber}\nNome: ${name}\nE-mail: ${email}\nTelefone: ${phone}\nCódigo: ${code}`;
+      const waMessage = `🎟️ Nova reserva na Rifa FTC Prêmios!
+Número: ${selectedNumber}
+Nome: ${name}
+E-mail: ${email}
+Telefone: ${phone}
+Código: ${code}`;
 
-      // copy to clipboard (so it's easy to paste into group)
       try {
         await navigator.clipboard.writeText(waMessage);
-        // open group link so admin can paste
         window.open(whatsGroupLink, '_blank');
-        // also, if an organizer number was provided, open wa.me for that number with prefilled text
         if (organizerWhatsAppNumber && organizerWhatsAppNumber.trim().length > 0){
           const encoded = encodeURIComponent(waMessage);
           window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${encoded}`, '_blank');
         }
         showAlert(`<strong>Reserva registrada</strong><br>Mensagem pronta copiada para a área de transferência. Abra o grupo do WhatsApp (abriu em nova aba) e cole a mensagem para notificar o grupo.`);
       } catch (err){
-        // fallback: open group link anyway and show message in alert
         window.open(whatsGroupLink, '_blank');
         showAlert(`<strong>Reserva registrada</strong><br>Abra o grupo do WhatsApp e copie/cole a mensagem abaixo:<pre style="background:#f7f9ff;padding:8px;border-radius:6px;margin-top:8px">${escapeHtml(waMessage)}</pre>`);
       }
@@ -394,8 +398,12 @@
         code: saleCode
       }, { merge: true });
 
-      const waMessage = `✅ Pagamento confirmado!\nNúmero: ${number}\nNome: ${t.name || '-'}\nE-mail: ${t.email || '-'}\nTelefone: ${t.phone || '-'}\nCódigo de venda: ${saleCode}`;
-      // notify group (copy + open group)
+      const waMessage = `✅ Pagamento confirmado!
+Número: ${number}
+Nome: ${t.name || '-'}
+E-mail: ${t.email || '-'}
+Telefone: ${t.phone || '-'}
+Código de venda: ${saleCode}`;
       try {
         await navigator.clipboard.writeText(waMessage);
         window.open(whatsGroupLink, '_blank');
@@ -467,7 +475,6 @@
     const paidTickets = tickets.filter(t => t.status === 'paid');
     if (paidTickets.length === 0){ alert('Nenhum número pago disponível para sorteio.'); return; }
 
-    // animation modal
     const anim = document.createElement('div');
     anim.style.position='fixed'; anim.style.left='50%'; anim.style.top='18%'; anim.style.transform='translateX(-50%)';
     anim.style.background='white'; anim.style.padding='18px'; anim.style.borderRadius='10px'; anim.style.boxShadow='0 12px 40px rgba(10,76,200,0.12)'; anim.style.zIndex='9999';
@@ -557,16 +564,24 @@
       if (!tickets.find(x => x.number === id)) tickets.push({ number: id, status: 'available', name:'', email:'', phone:'', code:'' });
     }
     tickets.sort((a,b) => a.number.localeCompare(b.number));
+    saveTicketsToLocalStorage(tickets);  // Salva localmente
     renderNumbersTable();
     renderSalesPanel();
   }, (err) => {
     console.error('onSnapshot tickets error:', err);
     showAlert('Sem conexão com Firestore. A tabela local está disponível, mas sincronização indisponível.');
-    if (tickets.length === 0){
-      tickets = [];
-      for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'available', name:'', email:'', phone:'', code:'' });
+    const localTickets = loadTicketsFromLocalStorage();
+    if (localTickets && localTickets.length > 0){
+      tickets = localTickets;
       renderNumbersTable();
       renderSalesPanel();
+    } else {
+      if (tickets.length === 0){
+        tickets = [];
+        for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'available', name:'', email:'', phone:'', code:'' });
+        renderNumbersTable();
+        renderSalesPanel();
+      }
     }
   });
 
@@ -596,11 +611,10 @@
     openPanelBtn.style.display = 'inline-block';
   });
 
-  // quick local render so table always appears fast
   (function quickLocalRender(){
     if (tickets.length === 0){
       tickets = [];
-      for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'available', name:'', email:'', phone:'', code:'' });
+      for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'disponivel', name:'', email:'', phone:'', code:'' });
       renderNumbersTable();
     }
   })();
