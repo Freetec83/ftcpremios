@@ -3,172 +3,198 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FTC Prêmios - Rifa Online</title>
+<title>FTC Prêmios - Rifa Online Avançada</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 10px;}
   .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2);}
   h1 { text-align: center; margin-bottom: 10px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; text-align: center; }
-  table td { padding: 12px 0; border: 1px solid #ccc; cursor: pointer; font-size: 0.9rem; border-radius: 4px; }
-  td.available { background-color: #ccc; color: #000; }
-  td.reserved { background-color: #80c0ff; color: #000; cursor: default; }
-  td.paid { background-color: #0059b3; color: #fff; cursor: default; }
-  #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
-  .modal-content { background:white; padding:20px; border-radius:8px; width:90%; max-width:400px; }
-  .modal-content input { width:100%; padding:6px; margin-bottom:10px; font-size:1rem; }
-  .buttons { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
-  button { padding:8px 15px; font-size:1rem; border:none; border-radius:5px; cursor:pointer; }
-  button.primary { background:#007bff; color:#fff; }
-  button.secondary { background:#bbb; color:#000; }
+  #numbersTable { width:100%; border-collapse: collapse; margin:20px auto; }
+  #numbersTable td { border:1px solid #ccc; padding:12px; text-align:center; border-radius:4px; cursor:pointer; transition:0.3s; }
+  td.available { background:#ccc; color:#000; }
+  td.reserved { background:#80c0ff; color:#000; cursor:default; }
+  td.paid { background:#0059b3; color:#fff; cursor:default; }
+  td.winner { background:#00b300; color:#fff; font-weight:bold; }
   #stats { margin-bottom: 10px; font-weight:bold; text-align:center; }
+  #controlButtons { text-align:center; margin-bottom:10px; }
   #drawSection { text-align:center; margin-top:16px; }
   #drawNumber { font-size:50px; font-weight:bold; margin-top:10px; }
-  #controlButtons { text-align:center; margin-bottom:10px; }
+  #history { margin-top:20px; }
+  #history table { width:100%; border-collapse: collapse; }
+  #history th, #history td { border:1px solid #ccc; padding:6px; text-align:center; font-size:0.9rem; }
   footer { text-align:center; margin-top:20px; font-style:italic; color:#555; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>FTC Prêmios - Rifa Online</h1>
+  <h1>FTC Prêmios - Rifa Online Avançada</h1>
   <div id="stats">Números pagos: 0 | Arrecadação: R$0</div>
 
   <div id="controlButtons">
-    <button id="resetRifaBtn" class="secondary">Resetar Rifa</button>
-    <button id="newRifaBtn" class="primary">Nova Rifa</button>
+    <button id="resetRifaBtn">Resetar Rifa</button>
+    <button id="newRifaBtn">Nova Rifa</button>
+    <button id="startDrawBtn">Sortear Número (organizador)</button>
   </div>
 
-  <table id="numbersTable" aria-label="Tabela de números da rifa"></table>
+  <table id="numbersTable"></table>
 
   <div id="drawSection">
-    <button id="startDraw" class="primary">Sortear Número (organizador)</button>
     <div id="drawNumber">--</div>
     <div id="winnerInfo"></div>
-    <button id="downloadPDF" class="secondary" style="margin-top:10px;">Download PDF do Sorteio</button>
+    <button id="downloadPDFBtn">Download PDF do Sorteio</button>
   </div>
-</div>
 
-<!-- Modal de Reserva -->
-<div id="modal" role="dialog" aria-modal="true">
-  <div class="modal-content">
-    <h3>Reservar Número <span id="selectedNumber"></span></h3>
-    <input type="text" id="nameInput" placeholder="Nome" required>
-    <input type="email" id="emailInput" placeholder="Email" required>
-    <input type="text" id="phoneInput" placeholder="Telefone" required>
-    <div class="buttons">
-      <button class="primary" id="confirmReserve">Confirmar</button>
-      <button class="secondary" id="cancelReserve">Cancelar</button>
-      <button class="secondary" id="cancelTicketBtn">Cancelar Reserva</button>
-    </div>
+  <div id="history">
+    <h3>Histórico de Sorteios</h3>
+    <table>
+      <thead><tr><th>Sorteio</th><th>Número</th><th>Nome</th><th>Email</th><th>Código</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
   </div>
 </div>
 
 <footer>© FTC Prêmios</footer>
 
-<!-- jsPDF CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- Firebase CDN -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDPbVECM-nqIMhDbiYA1cnnApwpNONVamg",
-    authDomain: "ftc-premios.firebaseapp.com",
-    projectId: "ftc-premios",
-    storageBucket: "ftc-premios.firebasestorage.app",
-    messagingSenderId: "366955454287",
-    appId: "1:366955454287:web:dd871826b8fae839706f3a",
-    measurementId: "G-3M7WJKPMPM"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDPbVECM-nqIMhDbiYA1cnnApwpNONVamg",
+  authDomain: "ftc-premios.firebaseapp.com",
+  projectId: "ftc-premios",
+  storageBucket: "ftc-premios.firebasestorage.app",
+  messagingSenderId: "366955454287",
+  appId: "1:366955454287:web:dd871826b8fae839706f3a",
+  measurementId: "G-3M7WJKPMPM"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const ticketPrice = 10;
-  const maxNumber = 99;
-  const organizerWhatsAppNumber = "5511999999999"; 
-  const panelPassword = "8378";
+const ticketPrice = 10;
+const maxNumber = 99;
+const panelPassword = "8378";
+const organizerWhatsAppNumber = "5511999999999";
 
-  let tickets = [];
-  let selectedNumber = null;
-  let lastWinner = null;
+let tickets = [];
+let lastWinner = null;
+let drawCount = 0;
 
-  const numbersTable = document.getElementById('numbersTable');
-  const stats = document.getElementById('stats');
-  const modal = document.getElementById('modal');
-  const nameInput = document.getElementById('nameInput');
-  const emailInput = document.getElementById('emailInput');
-  const phoneInput = document.getElementById('phoneInput');
-  const selectedNumberEl = document.getElementById('selectedNumber');
-  const confirmReserveBtn = document.getElementById('confirmReserve');
-  const cancelReserveBtn = document.getElementById('cancelReserve');
-  const cancelTicketBtn = document.getElementById('cancelTicketBtn');
-  const drawNumberEl = document.getElementById('drawNumber');
-  const winnerInfo = document.getElementById('winnerInfo');
-  const downloadPDFBtn = document.getElementById('downloadPDF');
-  const resetRifaBtn = document.getElementById('resetRifaBtn');
-  const newRifaBtn = document.getElementById('newRifaBtn');
+const numbersTable = document.getElementById('numbersTable');
+const stats = document.getElementById('stats');
+const drawNumberEl = document.getElementById('drawNumber');
+const winnerInfo = document.getElementById('winnerInfo');
+const resetRifaBtn = document.getElementById('resetRifaBtn');
+const newRifaBtn = document.getElementById('newRifaBtn');
+const startDrawBtn = document.getElementById('startDrawBtn');
+const downloadPDFBtn = document.getElementById('downloadPDFBtn');
+const historyBody = document.getElementById('historyBody');
 
-  function updateStats() {
-    const paidCount = tickets.filter(t=>t.status==='paid').length;
-    stats.textContent = `Números pagos: ${paidCount} | Arrecadação: R$${paidCount*ticketPrice}`;
+function updateStats(){
+  const paidCount = tickets.filter(t=>t.status==='paid').length;
+  stats.textContent=`Números pagos: ${paidCount} | Arrecadação: R$${paidCount*ticketPrice}`;
+}
+
+function renderTable(){
+  numbersTable.innerHTML='';
+  for(let i=0;i<=maxNumber;i++){
+    const t = tickets.find(tt=>tt.number===i.toString().padStart(2,'0')) || {number:i.toString().padStart(2,'0'),status:'available'};
+    const td=document.createElement('td');
+    td.textContent=t.number;
+    if(lastWinner && t.number===lastWinner.number) td.className='winner';
+    else td.className=t.status;
+    if(t.status==='available') td.onclick=()=>reserveNumber(t.number);
+    if(i%10===0){ const tr=document.createElement('tr'); numbersTable.appendChild(tr); tr.appendChild(td);}
+    else numbersTable.lastChild.appendChild(td);
   }
+  updateStats();
+  renderHistory();
+}
 
-  function renderTable() {
-    numbersTable.innerHTML='';
-    for(let i=0;i<=maxNumber;i++){
-      const t = tickets[i] || {number:i.toString().padStart(2,'0'), status:'available'};
-      const td = document.createElement('td');
-      td.textContent=t.number;
-      td.className=t.status;
-      if(t.status==='available') td.onclick=()=>openModal(t.number);
-      if(i%10===0){ const tr=document.createElement('tr'); numbersTable.appendChild(tr); tr.appendChild(td);}
-      else numbersTable.lastChild.appendChild(td);
+async function reserveNumber(number){
+  const name=prompt(`Reservar número ${number}\nDigite seu nome:`); if(!name) return;
+  const email=prompt('Digite seu email:'); if(!email) return;
+  const phone=prompt('Digite seu telefone:'); if(!phone) return;
+  const code='RES-'+number+'-'+Math.floor(1000+Math.random()*9000);
+  const docRef=doc(db,'tickets',number);
+  await setDoc(docRef,{number,status:'reserved',name,email,phone,code},{merge:true});
+  const waMessage=encodeURIComponent(`Número ${number} reservado.\nNome:${name}\nEmail:${email}\nTelefone:${phone}\nCódigo:${code}`);
+  window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`,'_blank');
+}
+
+function renderHistory(){
+  historyBody.innerHTML='';
+  tickets.filter(t=>t.status==='paid' || t.status==='winner').forEach((t,index)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${index+1}</td><td>${t.number}</td><td>${t.name||''}</td><td>${t.email||''}</td><td>${t.code||''}</td>`;
+    historyBody.appendChild(tr);
+  });
+}
+
+const ticketsCol=collection(db,'tickets');
+onSnapshot(ticketsCol,(snapshot)=>{
+  tickets=[];
+  snapshot.forEach(docSnap=>{tickets.push(docSnap.data());});
+  for(let i=0;i<=maxNumber;i++){
+    if(!tickets.find(t=>t.number===i.toString().padStart(2,'0'))){
+      tickets.push({number:i.toString().padStart(2,'0'),status:'available'});
     }
-    updateStats();
   }
+  tickets.sort((a,b)=>a.number.localeCompare(b.number));
+  renderTable();
+});
 
-  function openModal(number){
-    selectedNumber=number;
-    selectedNumberEl.textContent=number;
-    modal.style.display='flex';
-    nameInput.value=''; emailInput.value=''; phoneInput.value='';
-    nameInput.focus();
-  }
+// Organizador
+async function actionWithPassword(fn){
+  const pass=prompt('Senha do organizador:');
+  if(pass!==panelPassword){ alert('Senha incorreta'); return; }
+  await fn();
+}
 
-  function closeModal(){ modal.style.display='none'; }
-
-  async function confirmReserve(){
-    const name=nameInput.value.trim();
-    const email=emailInput.value.trim();
-    const phone=phoneInput.value.trim();
-    if(!name||!email||!phone){ alert('Preencha todos os campos'); return; }
-
-    const docRef = doc(db,'tickets',selectedNumber);
-    const code='RES-'+selectedNumber+'-'+Math.floor(1000+Math.random()*9000);
-    await setDoc(docRef,{number:selectedNumber,status:'reserved',name,email,phone,code},{merge:true});
-    closeModal();
-    const waMessage = encodeURIComponent(`Número ${selectedNumber} reservado.\nNome:${name}\nEmail:${email}\nTelefone:${phone}\nCódigo:${code}`);
-    window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`,'_blank');
-  }
-
-  confirmReserveBtn.onclick=confirmReserve;
-  cancelReserveBtn.onclick=closeModal;
-
-  cancelTicketBtn.onclick=async()=>{
-    const pass=prompt('Senha do organizador:');
-    if(pass!==panelPassword){ alert('Senha incorreta'); return; }
-    const docRef = doc(db,'tickets',selectedNumber);
+resetRifaBtn.onclick=()=>actionWithPassword(async ()=>{
+  if(!confirm('Deseja realmente resetar a rifa?')) return;
+  for(const t of tickets){
+    const docRef=doc(db,'tickets',t.number);
     await setDoc(docRef,{status:'available',name:'',email:'',phone:'',code:''},{merge:true});
-    closeModal();
   }
+  lastWinner=null;
+  drawNumberEl.textContent='--';
+  winnerInfo.textContent='';
+  drawCount=0;
+});
 
-  const ticketsCol = collection(db,'tickets');
-  onSnapshot(ticketsCol,(snapshot)=>{
-    tickets=[];
-    snapshot.forEach(docSnap=>{tickets.push(docSnap.data());});
-    for(let i=0;i<=maxNumber;i++){
-      if(!tickets.find(t=>t.number===i.toString().padStart(2,'0'))){
-        tickets.push({
+newRifaBtn.onclick=resetRifaBtn.onclick;
+
+startDrawBtn.onclick=()=>actionWithPassword(async ()=>{
+  const paidTickets=tickets.filter(t=>t.status==='paid');
+  if(paidTickets.length===0){ alert('Nenhum número pago disponível para sorteio'); return; }
+  const winner=paidTickets[Math.floor(Math.random()*paidTickets.length)];
+  drawCount++;
+  winner.status='winner';
+  lastWinner=winner;
+  drawNumberEl.textContent=winner.number;
+  winnerInfo.textContent=`Sorteio ${drawCount} - Vencedor: ${winner.name} | Email: ${winner.email} | Código: ${winner.code}`;
+  renderTable();
+});
+
+// PDF
+downloadPDFBtn.onclick=()=>{
+  if(!lastWinner){ alert('Nenhum sorteio realizado'); return; }
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF();
+  doc.setFontSize(16);
+  doc.text("FTC Prêmios - Rifa Online",20,20);
+  doc.setFontSize(12);
+  doc.text(`Sorteio ${drawCount}`,20,40);
+  doc.text(`Número sorteado: ${lastWinner.number}`,20,50);
+  doc.text(`Nome: ${lastWinner.name}`,20,60);
+  doc.text(`Email: ${lastWinner.email}`,20,70);
+  doc.text(`Telefone: ${lastWinner.phone}`,20,80);
+  doc.text(`Código: ${lastWinner.code}`,20,90);
+  doc.save(`Sorteio_${drawCount}_Numero_${lastWinner.number}.pdf`);
+};
+</script>
+</body>
+</html>
