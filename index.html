@@ -1,147 +1,192 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FTC Prêmios</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FTC Prêmios — Rifa Pública</title>
+
+<!-- Estilo: azul e cinza -->
 <style>
-  /* Seu CSS original aqui */
-  body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 10px;}
-  .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2);}
-  h1 { text-align: center; margin-bottom: 6px; }
-  #titleRifa { display: block; width: 100%; text-align: center; font-size: 1.75rem; padding: 6px 0; border: none; outline: none; background: transparent; }
-  .info-group { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;}
-  label { font-weight: bold; }
-  input[type="date"], input[type="time"] { padding: 5px; font-size: 1rem; }
-  table.numbers-table {
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-bottom: 16px;
-    text-align: center;
+  :root{
+    --bg:#f2f5f9;
+    --panel:#f8fafc;
+    --accent:#0b66ff; /* azul principal */
+    --accent-dark:#084bcf;
+    --muted:#6b7280; /* cinza */
+    --paid-bg:#cfe8ff;
+    --pending-bg:#f0f6ff;
+    --reserved-bg:#d6e6ff;
+    --text:#0b1220;
+    --card-shadow: 0 6px 18px rgba(11,66,255,0.08);
   }
-  table.numbers-table td {
-    border: 1px solid #ddd;
-    padding: 12px 0;
-    cursor: pointer;
-    font-size: 0.9rem;
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:var(--bg); color:var(--text); margin:0; padding:18px;}
+  .wrap{max-width:1100px;margin:18px auto;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  h1{font-size:1.4rem;color:var(--accent-dark); margin:0;}
+  .sub{color:var(--muted); font-size:0.95rem;}
+  .top-stats{display:flex;gap:12px;align-items:center;}
+  .stat{background:white;padding:10px 14px;border-radius:10px; box-shadow:var(--card-shadow); min-width:160px; text-align:center;}
+  .stat .num{font-weight:700; color:var(--accent-dark); font-size:1.25rem;}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:14px;}
+  .card{background:var(--panel); padding:14px;border-radius:12px; box-shadow:var(--card-shadow);}
+  .numbers-table{width:100%; border-collapse:collapse; text-align:center;}
+  .numbers-table td{padding:10px;border-radius:8px;margin:3px; cursor:pointer; user-select:none; font-weight:600;}
+  .numbers-row{display:flex; gap:6px; flex-wrap:wrap; justify-content:center;}
+  .number-cell{width:54px;height:44px;display:flex;align-items:center;justify-content:center;background:white;border:1px solid #e6eefc;border-radius:8px;color:var(--accent-dark);}
+  .number-cell:hover{transform:translateY(-3px); transition:all .12s linear; box-shadow:0 6px 14px rgba(11,66,255,0.06);}
+  .number-cell.paid{background:var(--paid-bg); color:var(--accent-dark); cursor:default; border:1px solid rgba(10,80,200,0.14);}
+  .number-cell.pending_payment{background:var(--reserved-bg); color:var(--accent-dark); cursor:default; border:1px solid rgba(10,80,200,0.12);}
+  .number-cell.pending{background:white;}
+  .actions{display:flex;flex-direction:column;gap:8px;}
+  button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600;}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-ghost{background:white;border:1px solid #dbeafe;color:var(--accent-dark);}
+  .btn-sec{background:#eef2ff;color:var(--accent-dark);}
+  .small{font-size:0.86rem;padding:6px 8px;border-radius:6px;}
+  input, select, textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eefc;background:white;}
+  label{display:block;font-weight:700;color:var(--muted); margin-bottom:6px; font-size:0.85rem;}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid #eef2ff;font-size:0.92rem;text-align:left}
+  .center{text-align:center}
+  footer{margin-top:18px;color:var(--muted);font-size:0.85rem;text-align:center}
+  /* modal */
+  #modal{display:none;position:fixed; inset:0; background:rgba(3,10,30,0.45); align-items:center; justify-content:center; z-index:90;}
+  .modal-box{background:white;padding:18px;border-radius:12px;width:420px; max-width:92%;}
+  .modal-row{display:flex;gap:8px;}
+  .muted{color:var(--muted);font-size:0.9rem}
+  .link-like{background:transparent;border:none;color:var(--accent);cursor:pointer;padding:0;font-weight:700}
+  .download-link{display:inline-block;margin-top:8px}
+  @media (max-width:980px){
+    .grid{grid-template-columns:1fr;}
+    .actions{flex-direction:row;}
   }
-  table.numbers-table td.paid {
-    background: #a6d785; color: #2b580c; cursor: default;
-  }
-  table.numbers-table td.pending_payment {
-    background: #ffcc66; color: #5a3b00;
-  }
-  table.numbers-table td.pending {
-    background: #ffe998;
-  }
-  #modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
-  .modal-content { background: white; padding: 20px; border-radius: 8px; max-width: 420px; width: 90%; }
-  .modal-content h3 { margin-top: 0; }
-  .modal-content label { display: block; margin: 10px 0 5px; }
-  .modal-content input { width: 100%; padding: 6px; font-size: 1rem; }
-  .buttons { margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px; }
-  button { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
-  button.primary { background-color: #007bff; color: white; }
-  button.secondary { background-color: #bbb; color: black; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 0.9rem; }
-  .draw-section { text-align: center; margin-top: 16px; padding: 14px; border: 1px solid #ccc; border-radius: 8px; background: #fafafa; }
-  #drawNumber { font-size: 52px; font-weight: bold; margin-top: 6px; }
-  footer { text-align: center; margin-top: 18px; color: #555; font-style: italic; }
-  #loginPanel { max-width: 320px; margin: 20px auto; background: white; padding: 18px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.2); }
-  #loginPanel input { width: 100%; padding: 8px; font-size: 1rem; margin-top: 6px; }
-  #whatsappGroup { max-width: 1000px; margin: 10px auto; padding: 0 20px; text-align: center; font-size: 1.1rem; font-weight: bold; }
-  #whatsappGroup a { display: inline-block; background-color: #25D366; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; }
-  #phoneError { color: red; display: none; margin-top: 4px; }
 </style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>FTC Prêmios — Rifa Pública</h1>
+        <div class="sub">Tabela pública 00–99 sincronizada em tempo real com o painel do organizador.</div>
+      </div>
+      <div class="top-stats">
+        <div class="stat">
+          <div class="muted">Números pagos</div>
+          <div id="paidCount" class="num">0</div>
+        </div>
+        <div class="stat">
+          <div class="muted">Arrecadação (R$)</div>
+          <div id="collected" class="num">0,00</div>
+        </div>
+      </div>
+    </header>
 
-  <!-- Conteúdo HTML (igual ao anterior) -->
-  <!-- loginPanel, mainContainer, números, modal, etc. -->
+    <div class="grid">
+      <!-- Public numbers card (left) -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div><strong>Escolha seu número (00–99)</strong><div class="muted">Clique para reservar</div></div>
+          <div class="muted">Valor: R$ <span id="ticketPriceDisplay">10,00</span></div>
+        </div>
 
-  <div id="loginPanel">
-    <h2>Login do Organizador</h2>
-    <label for="passwordInput">Senha:</label>
-    <input type="password" id="passwordInput" />
-    <button id="btnLogin" class="primary" style="width:100%; margin-top:8px;">Entrar</button>
-    <div id="loginError" style="color: red; display:none; margin-top:10px;">Senha incorreta.</div>
-  </div>
+        <div id="numbersContainer" class="numbers-row" aria-live="polite"></div>
 
-  <div class="container" id="mainContainer" style="display:none;">
-    <h1>FTC Prêmios</h1>
-    <div class="info-group" aria-label="Título editável">
-      <span style="flex:1; text-align:left; font-weight:bold;">PAINEL DE VENDAS DA RIFA N°</span>
-      <input id="titleRifa" value="01" aria-label="Título após N°" />
-    </div>
+        <div style="margin-top:12px; display:flex; justify-content:space-between; gap:8px;">
+          <button id="openWhatsappPublic" class="btn-primary">Entrar no grupo WhatsApp</button>
+          <button id="openOrganizerLogin" class="btn-ghost">Área do organizador</button>
+        </div>
+      </div>
 
-    <div class="info-group" aria-label="Detalhes do sorteio">
-      <div style="flex:1;"><strong>DATA DO SORTEIO:</strong> <input type="date" id="drawDate" /></div>
-      <div style="flex:1;"><strong>HORÁRIO:</strong> <input type="time" id="drawTime" /></div>
-    </div>
+      <!-- Organizer panel & actions (right) -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div><strong>Painel do Organizador</strong><div class="muted">Somente com senha</div></div>
+          <div id="panelState" class="muted">Não autenticado</div>
+        </div>
 
-    <div class="info-group" aria-label="Vencedor">
-      <div><strong>VENCEDOR(A):</strong> <span id="winnerDisplay">--</span></div>
-    </div>
+        <!-- login form -->
+        <div id="loginPanel">
+          <label for="passwordInput">Senha do organizador</label>
+          <input id="passwordInput" type="password" placeholder="••••" />
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="btnLogin" class="btn-primary" style="flex:1">Entrar</button>
+            <button id="btnDemo" class="btn-sec" style="flex:1">Demo</button>
+          </div>
+          <div id="loginError" class="muted" style="color:#d23; display:none; margin-top:8px">Senha incorreta</div>
+        </div>
 
-    <table aria-label="Tabela de vendas">
-      <thead>
-        <tr>
-          <th>NÚMERO</th>
-          <th>STATUS</th>
-          <th>E-MAIL</th>
-          <th>TELEFONE</th>
-          <th>CÓDIGO DE VENDA</th>
-          <th>AÇÃO</th>
-        </tr>
-      </thead>
-      <tbody id="salesPanel"></tbody>
-    </table>
+        <!-- main controls (hidden until login) -->
+        <div id="mainContainer" style="display:none;">
+          <div style="margin-top:4px;margin-bottom:8px">
+            <label>Título da Rifa</label>
+            <input id="titleRifa" value="FTC Prêmios — Rifa Nº 01" />
+          </div>
 
-    <div class="draw-section" aria-label="Sorteio">
-      <button id="startDraw" class="primary" aria-label="Iniciar sorteio">Sortear Número</button>
-      <div id="drawNumber" aria-live="polite" aria-atomic="true">--</div>
-    </div>
+          <table aria-label="Vendas">
+            <thead>
+              <tr><th>Número</th><th>Estado</th><th>Nome</th><th>E-mail</th><th>Contato</th><th class="center">Ação</th></tr>
+            </thead>
+            <tbody id="salesPanel"></tbody>
+          </table>
 
-    <div style="display:flex; justify-content: space-between; gap: 10px; margin-top: 12px;">
-      <button id="btnReset" class="secondary" style="flex:1;">Resetar Rifa</button>
-      <button id="btnNovaRifa" class="primary" style="flex:1;">Nova Rifa</button>
-    </div>
-  </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button id="startDraw" class="btn-primary">Sortear (só pagos)</button>
+            <button id="btnReset" class="btn-ghost">Resetar Rifa</button>
+            <button id="btnNovaRifa" class="btn-sec">Nova Rifa</button>
+          </div>
 
-  <div class="container" aria-label="Números da Rifa - Visível sem login">
-    <table class="numbers-table" aria-label="Tabela de números da rifa com status">
-      <tbody id="numbersTableBody"></tbody>
-    </table>
-  </div>
-
-  <div id="whatsappGroup">
-    Participe do nosso grupo oficial no WhatsApp para mais informações!<br />
-    <a href="https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt" target="_blank" rel="noopener noreferrer" aria-label="Link para o grupo WhatsApp da rifa">Entrar no grupo WhatsApp</a>
-  </div>
-
-  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-content">
-      <h3 id="modalTitle">Reservar Número <span id="selectedNumber"></span></h3>
-      <label for="emailInput">E-mail:</label>
-      <input type="email" id="emailInput" required />
-      <label for="phoneInput">Telefone:</label>
-      <input type="tel" id="phoneInput" placeholder="(99) 99999-9999" required />
-      <div id="phoneError">Telefone inválido. Use 10 ou 11 números.</div>
-      <div class="buttons">
-        <button class="primary" id="confirmReserve">Confirmar</button>
-        <button class="secondary" id="cancelReserve">Cancelar</button>
+          <div style="margin-top:10px;">
+            <label>Histórico de sorteios</label>
+            <div id="drawsList" style="max-height:150px; overflow:auto; border:1px solid #eef2ff; border-radius:8px; padding:8px;"></div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <footer>
+      <div>Os números reservados ficam indisponíveis para outros até serem cancelados. Sorteio somente entre números pagos.</div>
+    </footer>
   </div>
 
-  <audio id="drawSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAZGF0YQgAAAAA"></audio>
+  <!-- Modal reserva -->
+  <div id="modal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Reservar número <span id="selectedNumberTitle"></span></h3>
 
-  <!-- Firebase via CDN -->
-  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js"></script>
+      <div style="margin-top:8px">
+        <label for="nameInput">Nome</label>
+        <input id="nameInput" type="text" placeholder="Nome do comprador" />
+      </div>
+      <div style="margin-top:8px">
+        <label for="emailInput">E-mail</label>
+        <input id="emailInput" type="email" placeholder="exemplo@dominio.com" />
+      </div>
+      <div style="margin-top:8px">
+        <label for="phoneInput">Contato (telefone ou WhatsApp) — livre</label>
+        <input id="phoneInput" type="text" placeholder="Digite qualquer formato" />
+      </div>
 
-  <script>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="cancelReserve" class="btn-ghost">Cancelar</button>
+        <button id="confirmReserve" class="btn-primary">Confirmar reserva</button>
+      </div>
+
+      <div style="margin-top:10px" class="muted">Após confirmar, uma mensagem será aberta para enviar os dados ao grupo do organizador.</div>
+    </div>
+  </div>
+
+  <!-- PDF library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Firebase modular SDK (v10) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    import {
+      getFirestore, collection, doc, setDoc, onSnapshot, getDocs, addDoc, updateDoc, query, orderBy, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+
+    // Config do Firebase (use as suas se desejar)
     const firebaseConfig = {
       apiKey: "AIzaSyDPbVECM-nqIMhDbiYA1cnnApwpNONVamg",
       authDomain: "ftc-premios.firebaseapp.com",
@@ -151,252 +196,567 @@
       appId: "1:366955454287:web:dd871826b8fae839706f3a",
       measurementId: "G-3M7WJKPMPM"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    const ticketPrice = 10;
-    const maxNumber = 99;
+    // Constantes
+    const ticketPrice = 10.00;        // confirmado
+    const maxNumber = 99;            // 00..99
     const prizePercent = 0.7;
-    const panelPassword = "8378";
-    const organizerWhatsAppNumber = "5511999999999";
+    const panelPassword = "8378";    // senha atual
+    const organizerWhatsAppNumber = "5511999999999"; // ajuste se quiser
 
-    let tickets = [];
+    // UI refs
+    const numbersContainer = document.getElementById('numbersContainer');
+    const modal = document.getElementById('modal');
+    const selectedNumberTitle = document.getElementById('selectedNumberTitle');
+    const nameInput = document.getElementById('nameInput');
+    const emailInput = document.getElementById('emailInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const confirmReserveBtn = document.getElementById('confirmReserve');
+    const cancelReserveBtn = document.getElementById('cancelReserve');
+    const openWhatsappPublic = document.getElementById('openWhatsappPublic');
+    const openOrganizerLogin = document.getElementById('openOrganizerLogin');
+    const loginPanel = document.getElementById('loginPanel');
+    const btnLogin = document.getElementById('btnLogin');
+    const passwordInput = document.getElementById('passwordInput');
+    const btnDemo = document.getElementById('btnDemo');
+    const mainContainer = document.getElementById('mainContainer');
+    const panelState = document.getElementById('panelState');
+    const salesPanel = document.getElementById('salesPanel');
+    const startDrawBtn = document.getElementById('startDraw');
+    const btnReset = document.getElementById('btnReset');
+    const btnNovaRifa = document.getElementById('btnNovaRifa');
+    const paidCountEl = document.getElementById('paidCount');
+    const collectedEl = document.getElementById('collected');
+    const ticketPriceDisplay = document.getElementById('ticketPriceDisplay');
+    const drawsList = document.getElementById('drawsList');
+    const titleRifaInput = document.getElementById('titleRifa');
+
+    ticketPriceDisplay.textContent = ticketPrice.toFixed(2);
+
+    let tickets = []; // cache local
     let selectedNumber = null;
-    let drawingInProgress = false;
+    let isOrganizer = false;
 
+    // --- Helpers Firestore ---
+    async function saveTicket(ticket) {
+      await setDoc(doc(db, 'tickets', ticket.number), {
+        status: ticket.status,
+        email: ticket.email || '',
+        phone: ticket.phone || '',
+        name: ticket.name || '',
+        code: ticket.code || ''
+      }, { merge: true });
+    }
+
+    // Preenche documentos iniciais caso não existam (gera 00..99)
+    async function ensureTicketsExist() {
+      const snapshot = await getDocs(collection(db, 'tickets'));
+      if (snapshot.empty) {
+        // criar 00..99
+        const ops = [];
+        for (let i = 0; i <= maxNumber; i++) {
+          const numStr = String(i).padStart(2,'0');
+          ops.push(setDoc(doc(db, 'tickets', numStr), {
+            status: 'pending',
+            email: '',
+            phone: '',
+            name: '',
+            code: ''
+          }));
+        }
+        await Promise.all(ops);
+      } else {
+        // garantir que cada número exista (caso banco incompleto)
+        const present = new Set();
+        snapshot.forEach(d => present.add(d.id));
+        const ops2 = [];
+        for (let i = 0; i <= maxNumber; i++) {
+          const numStr = String(i).padStart(2,'0');
+          if (!present.has(numStr)) {
+            ops2.push(setDoc(doc(db, 'tickets', numStr), {
+              status: 'pending',
+              email: '',
+              phone: '',
+              name: '',
+              code: ''
+            }));
+          }
+        }
+        if (ops2.length) await Promise.all(ops2);
+      }
+    }
+
+    // Ouve tickets em tempo real
     function listenTicketsRealtime() {
-      db.collection("tickets").onSnapshot(snapshot => {
+      const coll = collection(db, 'tickets');
+      onSnapshot(coll, (snap) => {
         tickets = [];
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
+        snap.forEach(d => {
+          const data = d.data();
           tickets.push({
-            number: docSnap.id,
+            number: d.id,
             status: data.status || 'pending',
             email: data.email || '',
             phone: data.phone || '',
+            name: data.name || '',
             code: data.code || ''
           });
         });
-        for (let i=0; i<=maxNumber; i++) {
-          const numStr = i.toString().padStart(2,'0');
+        // garantir todos 00..99 existam no array
+        for (let i = 0; i <= maxNumber; i++) {
+          const numStr = String(i).padStart(2,'0');
           if (!tickets.find(t => t.number === numStr)) {
-            tickets.push({number: numStr, status:'pending', email:'', phone:'', code:''});
+            tickets.push({ number: numStr, status: 'pending', email:'', phone:'', name:'', code:'' });
           }
         }
         tickets.sort((a,b) => a.number.localeCompare(b.number));
         renderNumbersTable();
         renderSalesPanel();
-        updatePrize();
+        updateStats();
       });
     }
 
-    async function saveTicketToFirestore(ticket) {
-      await db.collection('tickets').doc(ticket.number).set({
-        status: ticket.status,
-        email: ticket.email,
-        phone: ticket.phone,
-        code: ticket.code
-      }, {merge: true});
-    }
-
-    function validatePhone(phone) {
-      const cleaned = phone.replace(/D/g, '');
-      return cleaned.length === 10 || cleaned.length === 11;
-    }
-
-    function openModal(number) {
-      selectedNumber = number;
-      const ticket = tickets.find(t => t.number === number);
-      document.getElementById('selectedNumber').textContent = number;
-      document.getElementById('emailInput').value = ticket ? ticket.email : '';
-      document.getElementById('phoneInput').value = ticket ? ticket.phone : '';
-      document.getElementById('phoneError').style.display = 'none';
-      document.getElementById('modal').style.display = 'flex';
-      document.getElementById('emailInput').focus();
-    }
-
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-    async function confirmReserve() {
-      const emailInput = document.getElementById('emailInput');
-      const phoneInput = document.getElementById('phoneInput');
-      const email = emailInput.value.trim();
-      const phone = phoneInput.value.trim();
-
-      if (!emailInput.checkValidity()) {
-        alert('Por favor, informe um e-mail válido.');
-        emailInput.focus();
-        return;
-      }
-      if (!validatePhone(phone)) {
-        document.getElementById('phoneError').style.display = 'block';
-        phoneInput.focus();
-        return;
-      }
-      document.getElementById('phoneError').style.display = 'none';
-
-      const t = tickets.find(ticket => ticket.number === selectedNumber);
-      if (t && t.status === 'pending') {
-        t.email = email;
-        t.phone = phone;
-        t.status = 'pending_payment';
-        t.code = 'RES-' + selectedNumber + '-' + Math.floor(1000 + Math.random() * 9000);
-        await saveTicketToFirestore(t);
-        closeModal();
-        renderNumbersTable();
-        renderSalesPanel();
-        updatePrize();
-
-        const waMessage = encodeURIComponent(`Olá, reservei o número ${selectedNumber} na Rifa. Código: ${t.code}. Email: ${email}.`);
-        window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`, '_blank');
-      }
-    }
-
+    // --- UI render ---
     function renderNumbersTable() {
-      const tbody = document.getElementById('numbersTableBody');
-      tbody.innerHTML = '';
-      let row;
-      tickets.forEach((t, i) => {
-        if (i % 10 === 0) {
-          row = document.createElement('tr');
-          tbody.appendChild(row);
+      numbersContainer.innerHTML = '';
+      tickets.forEach(t => {
+        const cell = document.createElement('div');
+        cell.className = 'number-cell ' + (t.status === 'paid' ? 'paid' : (t.status === 'pending_payment' ? 'pending_payment' : 'pending'));
+        cell.textContent = t.number;
+        cell.setAttribute('role','button');
+        // clickable only if available (pending)
+        if (t.status === 'pending') {
+          cell.addEventListener('click', () => openModal(t.number));
+        } else {
+          // show tooltip info on hover for reserved/paid
+          cell.title = `${t.status === 'paid' ? 'Pago' : 'Reservado'}${t.name ? ' — ' + t.name : ''}`;
         }
-        const td = document.createElement('td');
-        td.textContent = t.number;
-        td.className = t.status;
-        if (t.status !== 'paid') {
-          td.tabIndex = 0;
-          td.role = 'button';
-          td.setAttribute('aria-pressed', 'false');
-          td.addEventListener('click', () => openModal(t.number));
-          td.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') openModal(t.number);
-          });
-        }
-        row.appendChild(td);
+        numbersContainer.appendChild(cell);
       });
     }
 
     function renderSalesPanel() {
-      const tbody = document.getElementById('salesPanel');
-      if (!tbody) return;
-      tbody.innerHTML = '';
+      salesPanel.innerHTML = '';
       tickets.forEach(t => {
-        const statusText = t.status === 'paid' ? 'Pago' : (t.status === 'pending_payment' ? 'Pagamento Pendente' : 'Disponível');
         const tr = document.createElement('tr');
+        const statusText = t.status === 'paid' ? 'Pago' : (t.status === 'pending_payment' ? 'Pagamento Pendente' : 'Disponível');
         tr.innerHTML = `
           <td>${t.number}</td>
           <td>${statusText}</td>
-          <td>${t.email}</td>
-          <td>${t.phone}</td>
-          <td>${t.code}</td>
-          <td>${t.status === 'pending_payment' ? `<button onclick="confirmPayment('${t.number}')">Confirmar Pagamento</button>` : ''}</td>
+          <td>${escapeHtml(t.name || '')}</td>
+          <td>${escapeHtml(t.email || '')}</td>
+          <td>${escapeHtml(t.phone || '')}</td>
+          <td class="center">
+            ${t.status === 'pending_payment' ? `<button class="small" onclick="confirmPayment('${t.number}')">Confirmar pagamento</button>` : ''}
+            ${t.status !== 'pending' ? `<button class="small" onclick="cancelReservationPrompt('${t.number}')">Cancelar</button>` : ''}
+          </td>
         `;
-        tbody.appendChild(tr);
+        salesPanel.appendChild(tr);
       });
     }
 
-    window.confirmPayment = async function(number) {
-      const t = tickets.find(x => x.number === number);
-      if (t && t.status === 'pending_payment') {
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    function updateStats(){
+      const paidCount = tickets.filter(t => t.status === 'paid').length;
+      const collected = (paidCount * ticketPrice).toFixed(2);
+      paidCountEl.textContent = paidCount;
+      collectedEl.textContent = Number(collected).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    // --- Modal Reserve ---
+    function openModal(number) {
+      selectedNumber = number;
+      selectedNumberTitle.textContent = number;
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      modal.style.display = 'flex';
+      nameInput.focus();
+    }
+    function closeModal(){
+      modal.style.display = 'none';
+      selectedNumber = null;
+    }
+
+    confirmReserveBtn.addEventListener('click', async () => {
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const phone = phoneInput.value.trim();
+
+      if (!selectedNumber) return closeModal();
+
+      // reservar: status -> pending_payment
+      const ticket = { number: selectedNumber, status: 'pending_payment', email, phone, name, code: 'RES-' + selectedNumber + '-' + Math.floor(1000 + Math.random()*9000) };
+      await saveTicket(ticket);
+      closeModal();
+
+      // abrir WhatsApp para enviar os dados pro grupo
+      const waMessage = encodeURIComponent(`Reserva: Número ${selectedNumber}\nNome: ${name}\nE-mail: ${email}\nContato: ${phone}\nCódigo: ${ticket.code}`);
+      window.open(`https://wa.me/${organizerWhatsAppNumber}?text=${waMessage}`, '_blank');
+    });
+
+    cancelReserveBtn.addEventListener('click', closeModal);
+
+    // abrir grupo público
+    openWhatsappPublic.addEventListener('click', () => {
+      window.open('https://chat.whatsapp.com/ERUihUvpLiN3HrDQy4LALO?mode=wwt', '_blank');
+    });
+
+    // abrir painel organizador (frente ao login)
+    openOrganizerLogin.addEventListener('click', () => {
+      document.getElementById('passwordInput').focus();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+
+    // login
+    btnLogin.addEventListener('click', () => {
+      const pass = passwordInput.value.trim();
+      if (pass === panelPassword){
+        isOrganizer = true;
+        loginPanel.style.display = 'none';
+        mainContainer.style.display = 'block';
+        panelState.textContent = 'Autenticado';
+        passwordInput.value = '';
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+        setTimeout(()=>document.getElementById('loginError').style.display='none',2500);
+      }
+    });
+
+    // demo quick login (útil pra teste local)
+    btnDemo.addEventListener('click', () => {
+      passwordInput.value = panelPassword;
+      btnLogin.click();
+    });
+
+    // --- Organizer actions (exposed via window functions) ---
+    window.confirmPayment = async function(number){
+      if (!isOrganizer){
+        const ok = prompt('Senha do organizador:');
+        if (ok !== panelPassword) { alert('Senha incorreta'); return; }
+      }
+      const t = tickets.find(x=>x.number===number);
+      if (t && t.status === 'pending_payment'){
         t.status = 'paid';
-        t.code = 'COD-' + number + '-' + Math.floor(1000 + Math.random() * 9000);
-        await saveTicketToFirestore(t);
-        renderSalesPanel();
-        renderNumbersTable();
-        updatePrize();
-        alert(`Pagamento confirmado para número ${number}. Código de venda gerado: ${t.code}`);
+        t.code = 'COD-' + number + '-' + Math.floor(1000 + Math.random()*9000);
+        await saveTicket(t);
+        alert(`Pagamento confirmado para ${number}. Código: ${t.code}`);
+      } else {
+        alert('Número não está em pagamento pendente.');
       }
     };
 
-    function updatePrize() {
-      const paidCount = tickets.filter(t => t.status === 'paid').length;
-      const prize = (paidCount * ticketPrice * prizePercent).toFixed(2);
-      // Opcional: atualizar UI aqui
-    }
-
-    async function askPasswordAndRun(fn) {
-      const pass = prompt('Insira a senha do organizador:');
-      if (pass === panelPassword) {
-        await fn();
-      } else {
-        alert('Senha incorreta!');
+    window.cancelReservationPrompt = async function(number){
+      // password required
+      const pass = prompt('Senha para cancelar reserva:');
+      if (pass !== panelPassword){ alert('Senha incorreta'); return; }
+      const t = tickets.find(x=>x.number===number);
+      if (t){
+        t.status = 'pending';
+        t.email = ''; t.phone=''; t.name=''; t.code='';
+        await saveTicket(t);
+        alert(`Reserva de ${number} cancelada.`);
       }
+    };
+
+    // Resetar rifa
+    btnReset.addEventListener('click', async ()=>{
+      const pass = prompt('Senha para resetar a rifa:');
+      if (pass !== panelPassword){ alert('Senha incorreta'); return; }
+      if (!confirm('Deseja realmente resetar? Todos os números voltarão a disponível.')) return;
+      // set all to pending
+      for(const t of tickets){
+        t.status = 'pending';
+        t.email=''; t.phone=''; t.name=''; t.code='';
+        await saveTicket(t);
+      }
+      alert('Rifa resetada.');
+    });
+
+    // Nova rifa (mesma ação aqui, pode ser usado para trocar titulo)
+    btnNovaRifa.addEventListener('click', async ()=>{
+      const pass = prompt('Senha para iniciar nova rifa:');
+      if (pass !== panelPassword){ alert('Senha incorreta'); return; }
+      if (!confirm('Iniciar nova rifa e limpar dados atuais?')) return;
+      for(const t of tickets){
+        t.status = 'pending';
+        t.email=''; t.phone=''; t.name=''; t.code='';
+        await saveTicket(t);
+      }
+      alert('Nova rifa iniciada.');
+    });
+
+    // Sortear entre pagos
+    startDrawBtn.addEventListener('click', async ()=>{
+      const pass = prompt('Senha para realizar o sorteio:');
+      if (pass !== panelPassword){ alert('Senha incorreta'); return; }
+
+      const paidTickets = tickets.filter(t => t.status === 'paid');
+      if (paidTickets.length === 0){ alert('Nenhum número pago para sorteio.'); return; }
+
+      // animação básica de "roleta" (client-side)
+      let duration = 6000;
+      const drawEl = document.createElement('div');
+      drawEl.style.position='fixed';
+      drawEl.style.left='50%';
+      drawEl.style.top='20%';
+      drawEl.style.transform='translateX(-50%)';
+      drawEl.style.background='white';
+      drawEl.style.padding='18px';
+      drawEl.style.borderRadius='12px';
+      drawEl.style.boxShadow='0 12px 40px rgba(10,76,200,0.12)';
+      drawEl.style.zIndex='9999';
+      drawEl.innerHTML = `<div style="font-weight:800;font-size:28px;color:${getComputedStyle(document.documentElement).getPropertyValue('--accent-dark')}">SORTEANDO...</div>
+                          <div id="drawNum" style="font-weight:900;font-size:44px;margin-top:8px;color:#0b1220">--</div>`;
+      document.body.appendChild(drawEl);
+
+      const start = Date.now();
+      const interval = setInterval(() => {
+        const idx = Math.floor(Math.random()*paidTickets.length);
+        document.getElementById('drawNum').textContent = paidTickets[idx].number;
+        if ((Date.now()-start) >= duration){
+          clearInterval(interval);
+          const winner = paidTickets[Math.floor(Math.random()*paidTickets.length)];
+          document.getElementById('drawNum').textContent = winner.number;
+
+          // salvar sorteio no Firestore com código sequencial
+          (async ()=>{
+            // obter quantidade de draws já registrados para criar sequencial
+            const drawsSnapshot = await getDocs(collection(db,'draws'));
+            const nextSeq = drawsSnapshot.size + 1;
+            const drawCode = `DRAW-${String(nextSeq).padStart(4,'0')}`;
+            const drawDoc = {
+              code: drawCode,
+              createdAt: serverTimestamp(),
+              winnerNumber: winner.number,
+              winnerName: winner.name || '',
+              winnerEmail: winner.email || '',
+              winnerPhone: winner.phone || '',
+              title: titleRifaInput.value || '',
+            };
+            const newDrawRef = await addDoc(collection(db,'draws'), drawDoc);
+
+            // gerar PDF com lista de pagos e destacar vencedor
+            await generateDrawPDF(drawCode, winner, paidTickets, titleRifaInput.value || '');
+
+            // limpar animação depois
+            setTimeout(()=>{ document.body.removeChild(drawEl); alert(`Sorteio ${drawCode} concluído. Vencedor: ${winner.number}`); },1000);
+          })();
+        }
+      }, 120);
+    });
+
+    // --- PDF generation using jsPDF (versão aprimorada com cabeçalho/assinatura) ---
+    async function generateDrawPDF(drawCode, winner, paidTickets, title){
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageW = doc.internal.pageSize.width;
+      const pageH = doc.internal.pageSize.height;
+      const margin = 40;
+      const contentW = pageW - margin*2;
+      let y = margin;
+
+      // --- Cabeçalho com "logo" simples ---
+      // Desenhar área do logo
+      doc.setFillColor(10, 76, 255); // azul
+      doc.roundedRect(margin, y, 72, 48, 6, 6, 'F'); // retângulo preenchido
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica','bold');
+      doc.text('FTC', margin + 36, y + 32, { align: 'center', baseline: 'middle' });
+
+      // Título e subtítulo
+      doc.setTextColor(10, 12, 32);
+      doc.setFontSize(16);
+      doc.text(title || 'FTC Prêmios', margin + 90, y + 18);
+      doc.setFontSize(10);
+      doc.setTextColor(99, 110, 129);
+      doc.text('Resultado do Sorteio — Relatório Oficial', margin + 90, y + 36);
+
+      // Código do sorteio e data no canto direito do cabeçalho
+      doc.setFontSize(10);
+      doc.setTextColor(60, 72, 88);
+      const metaRightX = pageW - margin;
+      doc.text(`Código: ${drawCode}`, metaRightX, y + 14, { align: 'right' });
+      doc.text(`Data: ${new Date().toLocaleString('pt-BR')}`, metaRightX, y + 32, { align: 'right' });
+
+      y += 72;
+
+      // Linha separadora
+      doc.setDrawColor(230, 236, 255);
+      doc.setLineWidth(1);
+      doc.line(margin, y, pageW - margin, y);
+      y += 12;
+
+      // --- Informações do vencedor em bloco destacado ---
+      doc.setFontSize(11);
+      doc.setTextColor(10, 40, 80);
+      doc.text('Vencedor', margin, y);
+      y += 8;
+
+      // bloco de destaque do vencedor
+      const winnerBoxH = 48;
+      doc.setFillColor(220, 240, 255); // leve azul
+      doc.rect(margin, y, contentW, winnerBoxH, 'F');
+      doc.setFontSize(12);
+      doc.setTextColor(10, 40, 80);
+      const winnerText = `${winner.number} — ${winner.name || '-'} — ${winner.email || '-'} — ${winner.phone || '-'}`;
+      doc.text(winnerText, margin + 8, y + 20);
+      y += winnerBoxH + 12;
+
+      // --- Resumo numérico: total pagos e arrecadação ---
+      const paidCount = paidTickets.length;
+      const collected = (paidCount * ticketPrice).toFixed(2);
+      doc.setFontSize(10);
+      doc.setTextColor(80, 90, 105);
+      doc.text(`Números pagos: ${paidCount}`, margin, y);
+      doc.text(`Arrecadação total (R$): ${Number(collected).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, margin + 200, y);
+      y += 18;
+
+      // Espaço antes da lista
+      doc.setFontSize(11);
+      doc.setTextColor(10, 40, 80);
+      doc.text('Lista de números pagos (ordenada):', margin, y);
+      y += 10;
+
+      // --- Tabela de pagos: Número | Nome | Email | Contato ---
+      doc.setFontSize(10);
+      const col = {
+        number: 50,
+        name: 170,
+        email: 170,
+        phone: 110
+      };
+      const rowH = 16;
+      const tableStartX = margin;
+      let xPositions = {
+        number: tableStartX,
+        name: tableStartX + col.number,
+        email: tableStartX + col.number + col.name,
+        phone: tableStartX + col.number + col.name + col.email
+      };
+
+      // Cabeçalho da tabela
+      if (y + rowH > pageH - margin - 120) { doc.addPage(); y = margin; } // quebra se necessário
+      doc.setFillColor(245, 249, 255);
+      doc.rect(margin, y, contentW, rowH, 'F');
+      doc.setTextColor(25, 60, 130);
+      doc.setFont('helvetica','bold');
+      doc.text('NÚM', xPositions.number + 6, y + 12);
+      doc.text('NOME', xPositions.name + 6, y + 12);
+      doc.text('E-MAIL', xPositions.email + 6, y + 12);
+      doc.text('CONTATO', xPositions.phone + 6, y + 12);
+      y += rowH + 4;
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(20, 30, 40);
+
+      // Ordenar lista por número (opcional)
+      paidTickets.sort((a,b) => a.number.localeCompare(b.number));
+
+      for (let i = 0; i < paidTickets.length; i++) {
+        const p = paidTickets[i];
+        // quebra de página se o próximo row ultrapassar
+        if (y + rowH > pageH - margin - 100) {
+          // rodapé simples na página anterior
+          doc.setFontSize(9);
+          doc.setTextColor(140,150,170);
+          doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageW - margin, pageH - margin + 10, { align: 'right' });
+
+          doc.addPage();
+          y = margin;
+
+          // repetir cabeçalho da tabela na nova página
+          doc.setFillColor(245, 249, 255);
+          doc.rect(margin, y, contentW, rowH, 'F');
+          doc.setTextColor(25, 60, 130);
+          doc.setFont('helvetica','bold');
+          doc.text('NÚM', xPositions.number + 6, y + 12);
+          doc.text('NOME', xPositions.name + 6, y + 12);
+          doc.text('E-MAIL', xPositions.email + 6, y + 12);
+          doc.text('CONTATO', xPositions.phone + 6, y + 12);
+          y += rowH + 4;
+          doc.setFont('helvetica','normal');
+          doc.setTextColor(20, 30, 40);
+        }
+
+        // destaque de linha se for o vencedor
+        if (p.number === winner.number) {
+          doc.setFillColor(220, 240, 255);
+          doc.rect(margin - 4, y - 4, contentW + 8, rowH + 4, 'F');
+        }
+
+        // escrever colunas (com truncamento se necessário)
+        const safe = (s, maxChars) => {
+          if (!s) return '-';
+          const str = String(s);
+          return (str.length > maxChars) ? str.slice(0, maxChars - 3) + '...' : str;
+        };
+
+        doc.text(safe(p.number, 6), xPositions.number + 6, y + 12);
+        doc.text(safe(p.name, 26), xPositions.name + 6, y + 12);
+        doc.text(safe(p.email, 30), xPositions.email + 6, y + 12);
+        doc.text(safe(p.phone, 20), xPositions.phone + 6, y + 12);
+        y += rowH + 2;
+      }
+
+      // --- Assinatura e rodapé ---
+      // Assinatura do organizador (linha)
+      if (y + 80 > pageH - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      y += 24;
+      doc.setDrawColor(190, 200, 220);
+      const sigX = margin;
+      const sigW = 220;
+      doc.line(sigX, y, sigX + sigW, y); // linha assinatura
+      doc.setFontSize(10);
+      doc.setTextColor(80, 90, 105);
+      doc.text('Assinatura do Organizador', sigX + 10, y + 16);
+
+      // Observações e validade
+      doc.setFontSize(9);
+      doc.text('Observações: Este documento é o registro oficial do sorteio realizado. O código acima identifica unicamente este sorteio.', margin, pageH - margin - 20);
+
+      // adicionar número da página final
+      doc.setFontSize(9);
+      doc.text(`Página ${doc.internal.getNumberOfPages()}`, pageW - margin, pageH - margin + 10, { align: 'right' });
+
+      // salvar
+      const fileName = `${drawCode}.pdf`;
+      doc.save(fileName);
     }
 
-    document.getElementById('btnReset').addEventListener('click', () => {
-      askPasswordAndRun(async () => {
-        if (!confirm('Deseja realmente resetar a rifa? Todos os números voltarão a estar disponíveis.')) return;
-        for (const t of tickets) {
-          t.status = 'pending';
-          t.email = '';
-          t.phone = '';
-          t.code = '';
-          await saveTicketToFirestore(t);
-        }
-        drawingInProgress = false;
-        document.getElementById('winnerDisplay').textContent = '--';
-        document.getElementById('drawNumber').textContent = '--';
+    // --- draws list realtime ---
+    function listenDrawsRealtime(){
+      const coll = collection(db, 'draws');
+      const q = query(coll, orderBy('createdAt','desc'));
+      onSnapshot(q, (snap) => {
+        drawsList.innerHTML = '';
+        snap.forEach(d => {
+          const data = d.data();
+          const div = document.createElement('div');
+          div.style.padding='8px';
+          div.style.borderBottom='1px solid #eef6ff';
+          div.innerHTML = `<strong>${data.code || '—'}</strong> — ${data.title || ''} <div class="muted" style="font-size:0.85rem">${data.winnerNumber || '—'} — ${(data.createdAt && data.createdAt.toDate) ? data.createdAt.toDate().toLocaleString('pt-BR') : ''}</div>`;
+          drawsList.appendChild(div);
+        });
       });
-    });
+    }
 
-    document.getElementById('btnNovaRifa').addEventListener('click', () => {
-      askPasswordAndRun(async () => {
-        if (!confirm('Iniciar uma nova rifa redefinindo dados atuais?')) return;
-        for (const t of tickets) {
-          t.status = 'pending';
-          t.email = '';
-          t.phone = '';
-          t.code = '';
-          await saveTicketToFirestore(t);
-        }
-        drawingInProgress = false;
-        document.getElementById('winnerDisplay').textContent = '--';
-        document.getElementById('drawNumber').textContent = '--';
-      });
-    });
+    // --- Inicialização ---
+    (async function init(){
+      await ensureTicketsExist();
+      listenTicketsRealtime();
+      listenDrawsRealtime();
+    })();
 
-    document.getElementById('startDraw').addEventListener('click', () => {
-      askPasswordAndRun(() => {
-        const paidTickets = tickets.filter(t => t.status === 'paid');
-        if (paidTickets.length === 0) {
-          alert('Nenhum número pago disponível para sorteio.');
-          return;
-        }
-        if (drawingInProgress) return;
-        drawingInProgress = true;
+    // expose some helpers for console/testing
+    window._FTC = { db, saveTicket, tickets };
 
-        const drawNumberEl = document.getElementById('drawNumber');
-        const winnerDisplay = document.getElementById('winnerDisplay');
-        let start = Date.now();
-        const duration = 30000;
-
-        const audio = document.getElementById('drawSound');
-        if (audio) {
-          try { audio.currentTime = 0; audio.loop = true; audio.play().catch(() => {}); } catch (e) {}
-        }
-
-        const intervalId = setInterval(() => {
-          const randIndex = Math.floor(Math.random() * paidTickets.length);
-          drawNumberEl.textContent = paidTickets[randIndex].number;
-          if ((Date.now() - start) >= duration) {
-            clearInterval(intervalId);
-            const winner = paidTickets[Math.floor(Math.random() * paidTickets.length)];
-            drawNumberEl.textContent = winner.number;
-            winnerDisplay.textContent = `Número ${winner.number} | Email: ${winner.email} | Código: ${winner.code}`;
-            drawingInProgress = false;
-            if (audio) {
-              try { audio.pause(); audio.currentTime = 0; } catch (e) {}
-            }
-          }
-        }, 100);
-      });
-    });
-
-    listenTicketsRealtime();
-
-    document.getElementById('confirmReserve').addEventListener('click', confirmReserve);
-    document.getElementById('cancelReserve').addEventListener('click', closeModal);
   </script>
 </body>
 </html>
