@@ -614,7 +614,7 @@ Código de venda: ${saleCode}`;
   (function quickLocalRender(){
     if (tickets.length === 0){
       tickets = [];
-      for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'disponivel', name:'', email:'', phone:'', code:'' });
+      for (let i=0;i<=maxNumber;i++) tickets.push({ number: formatNum(i), status:'available', name:'', email:'', phone:'', code:'' });
       renderNumbersTable();
     }
   })();
