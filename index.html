@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>FTC Prêmios - Rifa Online</title>
 <style>
   :root {
     --bg: #f3f6fb;
-    --card: #fff;
+    --card: #ffffff;
     --accent: #0b66ff;
     --accent-dark: #084bcf;
     --muted: #6b7280;
@@ -16,23 +16,48 @@
     --paid: #0b4fd6;
   }
   body {
-    font-family: system-ui, Segoe UI, Roboto, Arial;
-    margin: 0;
+    margin: 0; font-family: system-ui, Segoe UI, Roboto, Arial;
     background: var(--bg);
-    padding: 14px;
     color: #0b1220;
+    padding: 14px;
   }
-  .wrap { max-width: 1100px; margin: 14px auto; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  h1 { color: var(--accent-dark); margin: 0; font-size: 1.3rem; }
-  .sub { color: var(--muted); font-size: 0.95rem; }
-  #numbersTable { width: 100%; border-collapse: collapse; cursor: pointer; margin-top: 12px; }
-  #numbersTable td { padding: 8px; border: 1px solid rgba(10,20,40,0.04); text-align: center; border-radius: 6px; font-weight: bold; user-select: none; }
-  .cell-available { background: var(--available); }
-  .cell-reserved { background: var(--reserved); cursor: not-allowed; }
-  .cell-paid { background: var(--paid); color: white; cursor: not-allowed; }
-  footer { text-align: center; color: var(--muted); font-weight: bold; margin-top: 20px; }
-  img.qr { border: 2px solid var(--accent); border-radius: 12px; display: block; margin: 14px auto; }
+  .wrap {
+    max-width: 1100px;
+    margin: 14px auto;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+  }
+  h1 {
+    margin: 0; font-size: 1.3rem; color: var(--accent-dark);
+  }
+  .sub {
+    color: var(--muted); font-size: 0.95rem;
+  }
+  #numbersTable {
+    width: 100%; border-collapse: collapse; margin: 8px 0; cursor: pointer;
+  }
+  #numbersTable td {
+    border: 1px solid rgba(10, 20, 40, 0.04); padding: 10px; text-align: center; border-radius: 6px; font-weight: 700; user-select: none;
+  }
+  .cell-available {
+    background: var(--available);
+  }
+  .cell-reserved {
+    background: var(--reserved);
+    cursor: not-allowed;
+  }
+  .cell-paid {
+    background: var(--paid);
+    color: white;
+    cursor: not-allowed;
+  }
+  footer {
+    text-align: center; margin-top: 20px; font-weight: bold; color: var(--muted);
+  }
+  img.qr {
+    display: block; margin: 14px auto; border: 2px solid var(--accent); border-radius: 12px;
+  }
 </style>
 </head>
 <body>
@@ -43,90 +68,90 @@
         <div class="sub">Rifa pública 00–99 — sincronizada com painel do organizador</div>
       </div>
     </header>
-  
+
     <img src="Screenshot_20251031_181234.jpg" alt="QR Code Pix" width="200" height="200" class="qr" />
-  
+
     <p style="text-align:center; font-weight:bold;">...O próximo movimento pode ser o seu grande ganho !!!</p>
-  
+
     <table id="numbersTable" aria-label="Tabela de números"></table>
-  
+
     <footer>...O próximo movimento pode ser o seu grande ganho !!!</footer>
   </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    // substitua estas chaves pelas suas do Firebase
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_MESSAGE_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.appspot.com",
+      messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+      appId: "SEU_APP_ID"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const ticketsCol = db.collection('tickets');
+    firebase.initializeApp(firebaseConfig);
 
-  const maxNumber = 99;
-  const ticketPrice = 10;
-  const numbersTable = document.getElementById('numbersTable');
+    const db = firebase.firestore();
+    const ticketsCol = db.collection('tickets');
 
-  let tickets = [];
+    const maxNumber = 99;
+    const ticketPrice = 10;
+    const numbersTable = document.getElementById('numbersTable');
 
-  function render() {
-    let html = '<tr>';
-    tickets.forEach((t, i) => {
-      let className = 'cell-available';
-      if (t.status === 'reserved') className = 'cell-reserved';
-      else if (t.status === 'paid') className = 'cell-paid';
+    let tickets = [];
 
-      html += `<td class="${className}">${t.number}</td>`;
-      if ((i + 1) % 10 === 0) html += '</tr><tr>';
-    });
-    html += '</tr>';
-    numbersTable.innerHTML = html;
-  }
+    function render() {
+      let html = '<tr>';
+      tickets.forEach((ticket, idx) => {
+        let className = 'cell-available';
+        if (ticket.status === 'reserved') className = 'cell-reserved';
+        else if (ticket.status === 'paid') className = 'cell-paid';
 
-  ticketsCol.onSnapshot(snap => {
-    tickets = [];
-    snap.forEach(doc => tickets.push(doc.data()));
-    for (let i = 0; i <= maxNumber; i++) {
-      let num = i.toString().padStart(2, '0');
-      if (!tickets.find(t => t.number === num)) {
-        tickets.push({ number: num, status: 'available' });
+        html += `<td class="${className}">${ticket.number}</td>`;
+        if ((idx + 1) % 10 === 0) html += '</tr><tr>';
+      });
+      html += '</tr>';
+      numbersTable.innerHTML = html;
+    }
+
+    ticketsCol.onSnapshot(snap => {
+      tickets = [];
+      snap.forEach(doc => tickets.push(doc.data()));
+      for (let i = 0; i <= maxNumber; i++) {
+        const num = i.toString().padStart(2, '0');
+        if (!tickets.find(t => t.number === num)) {
+          tickets.push({ number: num, status: 'available' });
+        }
       }
-    }
-    tickets.sort((a, b) => a.number.localeCompare(b.number));
-    render();
-  }, err => {
-    console.error('Erro loading tickets:', err);
-  });
+      tickets.sort((a, b) => a.number.localeCompare(b.number));
+      render();
+    }, err => {
+      console.error('Erro loading tickets:', err);
+    });
 
-  numbersTable.addEventListener('click', async e => {
-    if (e.target.tagName !== 'TD') return;
-    let number = e.target.textContent;
-    let ticket = tickets.find(t => t.number === number);
-    if (!ticket || ticket.status !== 'available') {
-      alert('Número indisponível para reserva.');
-      return;
-    }
-    let name = prompt(`Digite seu nome para reservar o número ${number}:`);
-    if (!name) return alert('Reserva cancelada.');
-    try {
-      await ticketsCol.doc(number).set({
-        number,
-        status: 'reserved',
-        name
-      }, { merge: true });
-      alert(`Número ${number} reservado com sucesso para ${name}!`);
-    } catch (err) {
-      alert('Erro ao reservar número. Tente novamente.');
-      console.error(err);
-    }
-  });
-</script>
+    numbersTable.addEventListener('click', async e => {
+      if (e.target.tagName !== 'TD') return;
+      const number = e.target.textContent;
+      const ticket = tickets.find(t => t.number === number);
+      if (!ticket || ticket.status !== 'available') {
+        alert('Número indisponível para reserva.');
+        return;
+      }
+      const name = prompt(`Digite seu nome para reservar o número ${number}:`);
+      if (!name) return alert('Reserva cancelada.');
+      try {
+        await ticketsCol.doc(number).set({
+          number,
+          status: 'reserved',
+          name
+        }, { merge: true });
+        alert(`Número ${number} reservado com sucesso para ${name}!`);
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao reservar número. Tente novamente.');
+      }
+    });
+  </script>
 </body>
 </html>
