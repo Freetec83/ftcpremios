@@ -3,213 +3,122 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rifa Completa com Firebase</title>
+<title>Reserva de Números da Rifa</title>
 <style>
-  /* (mesmo estilo do seu projeto anterior) */
+  body { font-family: Arial, sans-serif; padding: 20px; }
+  h1 { color: #333; }
+  table { border-collapse: collapse; margin: 10px 0; }
+  td {
+    border: 1px solid #aaa; padding: 10px; width: 40px; text-align: center;
+    cursor: pointer; user-select: none;
+  }
+  td.disponivel { background-color: #b8f2b8; }
+  td.reservado { background-color: #f2b8b8; cursor: not-allowed; }
+  td.selecionado { border: 3px solid #007700; }
+  form { margin-top: 20px; max-width: 300px; }
+  label { display: block; margin: 8px 0 3px; }
+  input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%; padding: 6px; box-sizing: border-box;
+  }
+  button { margin-top: 15px; padding: 10px 20px; background: #007700; color: white; border: none; cursor: pointer;}
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  #mensagem { margin-top: 15px; font-weight: bold; }
 </style>
 </head>
 <body>
 
-<h1>Rifa Completa com Painel e Roleta</h1>
+<h1>Escolha o número da sua rifa</h1>
+<table id="gridNumeros">
+  <!-- Números vão aqui -->
+</table>
 
-<div id="loginSection">
-  <label for="emailInput">E-mail do Admin:</label>
-  <input type="email" id="emailInput" placeholder="Digite o e-mail do admin" />
-  <label for="passwordInput">Senha do Admin:</label>
-  <input type="password" id="passwordInput" placeholder="Digite a senha" />
-  <button onclick="login()">Entrar no Painel</button>
-  <p id="loginMsg" style="color:#f55;"></p>
-</div>
+<form id="formReserva" onsubmit="return reservarNumero()">
+  <input type="hidden" id="numeroSelecionado" />
+  <label for="nome">Nome:</label>
+  <input type="text" id="nome" required />
+  <label for="email">E-mail:</label>
+  <input type="email" id="email" required />
+  <label for="telefone">Telefone:</label>
+  <input type="tel" id="telefone" pattern="^\\d{10,11}$" placeholder="Somente números (10-11 dígitos)" required />
+  <button type="submit" disabled>Reservar Número</button>
+</form>
 
-<div id="adminPanel" style="display:none;">
-  <h2>Painel Organizador</h2>
-  <label>Número da Rifa
-    <input type="text" id="raffleNumber" value="001" />
-  </label>
-  <label>Valor da Rifa (R$)
-    <input type="number" step="0.01" id="raffleValue" value="10.00" />
-  </label>
-  <label>Data do Sorteio
-    <input type="date" id="raffleDate" />
-  </label>
-  <label>Hora do Sorteio
-    <input type="time" id="raffleTime" />
-  </label>
-  <button onclick="saveRaffleInfo()">Salvar Dados da Rifa</button>
-  <button onclick="logout()">Sair do Painel</button>
-</div>
+<div id="mensagem"></div>
 
-<div id="controlPanel" style="display:none;">
-  <h2>Painel de Controle - Reservas e Pagamentos</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Número</th><th>E-mail</th><th>Telefone</th><th>Status</th><th>Código</th><th>Confirmar Pagamento</th>
-      </tr>
-    </thead>
-    <tbody id="controlTable">
-      <!-- reservas dinâmicas -->
-    </tbody>
-  </table>
-</div>
+<script>
+  const totalNumeros = 50;
+  const numerosReservados = new Set([3, 7, 15]); // Exemplo: números já reservados
+  let numeroSelecionado = null;
 
-<div id="grid">
-  <!-- números da rifa aparecerão aqui -->
-</div>
+  const grid = document.getElementById('gridNumeros');
+  const btnReservar = document.querySelector('button[type=submit]');
+  const mensagem = document.getElementById('mensagem');
+  const inputNumero = document.getElementById('numeroSelecionado');
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDocs, collection, updateDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDPbVECM-nqIMhDbiYA1cnnApwpNONVamg",
-    authDomain: "ftc-premios.firebaseapp.com",
-    projectId: "ftc-premios",
-    storageBucket: "ftc-premios.appspot.com",
-    messagingSenderId: "366955454287",
-    appId: "1:366955454287:web:dd871826b8fae839706f3a",
-    measurementId: "G-3M7WJKPMPM"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  let raffleData = {
-    number: '001',
-    value: 10.00,
-    date: '',
-    time: '',
-  };
-  const reservedNumbers = {}; // Reserva local espelho
-
-  const loginSection = document.getElementById('loginSection');
-  const adminPanel = document.getElementById('adminPanel');
-  const controlPanel = document.getElementById('controlPanel');
-
-  const grid = document.getElementById('grid');
-
-  // Renderiza a grade de números 00-99
-  function renderGrid() {
-    grid.innerHTML = '';
-    for(let i=0; i<100; i++) {
-      const numStr = i.toString().padStart(2,'0');
-      const div = document.createElement('div');
-      div.className = 'num';
-      div.textContent = numStr;
-      if(reservedNumbers[numStr]) {
-        div.classList.add(reservedNumbers[numStr].pago ? 'paid' : 'reserved');
-        div.title = reservedNumbers[numStr].pago ? 'Pago' : 'Reservado';
-      } else {
-        div.title = 'Disponível';
-        div.classList.add('num');
-      }
-      grid.appendChild(div);
+  // Criar tabela de números dinamicamente
+  function criarTabela() {
+    let html = '';
+    for (let i = 1; i <= totalNumeros; i++) {
+      const classe = numerosReservados.has(i) ? 'reservado' : 'disponivel';
+      html += `<td class="${classe}" data-num="${i}">${i}</td>`;
+      if (i % 10 === 0) html += '</tr><tr>';
     }
+    grid.innerHTML = '<tr>' + html + '</tr>';
   }
 
-  // Carrega reservas do Firestore
-  async function carregarReservas() {
-    const snapshot = await getDocs(collection(db, "reservas"));
-    snapshot.forEach(doc => {
-      reservedNumbers[doc.id] = doc.data();
-    });
-    renderGrid();
-    renderControlTable();
-  }
-
-  // Renderiza painel de controle
-  function renderControlTable(){
-    const tbody = document.getElementById('controlTable');
-    tbody.innerHTML = '';
-    Object.entries(reservedNumbers).forEach(([num, data])=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${num}</td><td>${data.email}</td><td>${data.telefone}</td><td>${data.pago ? 'Pago' : 'Reservado'}</td><td>${data.codigo}</td>
-        <td><button ${data.pago ? 'disabled' : ''} onclick="confirmarPagamento('${num}')">Confirmar Pagamento</button></td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Salva uma reserva nova
-  async function salvarReserva(num, email, telefone, codigo) {
-    await setDoc(doc(db, "reservas", num), {
-      email,
-      telefone,
-      codigo,
-      pago: false
-    });
-    reservedNumbers[num] = { email, telefone, codigo, pago: false };
-    renderGrid();
-    renderControlTable();
-  }
-
-  // Confirma pagamento no Firestore
-  async function confirmarPagamento(num) {
-    const ref = doc(db, "reservas", num);
-    await updateDoc(ref, { pago: true });
-    reservedNumbers[num].pago = true;
-    renderGrid();
-    renderControlTable();
-  }
-  window.confirmarPagamento = confirmarPagamento; // tornar global para botão onclick
-
-  // Autenticação Firebase - login admin
-  async function login(){
-    const email = document.getElementById('emailInput').value;
-    const senha = document.getElementById('passwordInput').value;
-    try {
-      await signInWithEmailAndPassword(auth, email, senha);
-      document.getElementById('loginMsg').textContent = '';
-      loginSection.style.display = 'none';
-      adminPanel.style.display = 'block';
-      controlPanel.style.display = 'block';
-      carregarReservas();
-    } catch (e) {
-      document.getElementById('loginMsg').textContent = 'Erro ao fazer login: ' + e.message;
-    }
-  }
-  window.login = login;
-
-  // Logout admin
-  async function logout() {
-    await signOut(auth);
-    loginSection.style.display = 'block';
-    adminPanel.style.display = 'none';
-    controlPanel.style.display = 'none';
-    document.getElementById('emailInput').value = '';
-    document.getElementById('passwordInput').value = '';
-  }
-  window.logout = logout;
-
-  // Observe estado da autenticação para manter sessão
-  onAuthStateChanged(auth, user => {
-    if(user) {
-      loginSection.style.display = 'none';
-      adminPanel.style.display = 'block';
-      controlPanel.style.display = 'block';
-      carregarReservas();
+  // Lidar com clique no número
+  grid.addEventListener('click', event => {
+    if (event.target.tagName !== 'TD') return;
+    if (event.target.classList.contains('reservado')) return;
+    
+    const n = +event.target.dataset.num;
+    if (numeroSelecionado === n) {
+      event.target.classList.remove('selecionado');
+      numeroSelecionado = null;
+      inputNumero.value = '';
+      btnReservar.disabled = true;
     } else {
-      loginSection.style.display = 'block';
-      adminPanel.style.display = 'none';
-      controlPanel.style.display = 'none';
+      // limpar seleção anterior
+      grid.querySelectorAll('.selecionado').forEach(td => td.classList.remove('selecionado'));
+      event.target.classList.add('selecionado');
+      numeroSelecionado = n;
+      inputNumero.value = n;
+      btnReservar.disabled = false;
     }
+    mensagem.textContent = '';
   });
 
-  // Salva informações da rifa - você pode salvar no Firestore se quiser persistir
-  function saveRaffleInfo(){
-    raffleData.number = document.getElementById('raffleNumber').value;
-    raffleData.value = parseFloat(document.getElementById('raffleValue').value);
-    raffleData.date = document.getElementById('raffleDate').value;
-    raffleData.time = document.getElementById('raffleTime').value;
-    alert('Dados da rifa salvos localmente.');
+  // Validar telefone simples (só números e tamanho 10 ou 11)
+  function validarTelefone(tel) {
+    return /^d{10,11}$/.test(tel);
   }
-  window.saveRaffleInfo = saveRaffleInfo;
 
-  // Iniciar a grade inicialmente vazia
-  renderGrid();
+  // Reservar número (simulação)
+  function reservarNumero() {
+    if (!numeroSelecionado) {
+      mensagem.textContent = 'Selecione um número antes de reservar.';
+      return false;
+    }
+    const nome = document.getElementById('nome').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const telefone = document.getElementById('telefone').value.trim();
+    if (!validarTelefone(telefone)) {
+      mensagem.textContent = 'Telefone inválido. Use apenas números (10 ou 11 dígitos).';
+      return false;
+    }
+    // Simular reserva
+    numerosReservados.add(numeroSelecionado);
+    // Atualizar visual
+    criarTabela();
+    // Reset form
+    document.getElementById('formReserva').reset();
+    numeroSelecionado = null;
+    btnReservar.disabled = true;
+    mensagem.textContent = `Número reservado com sucesso para ${nome}!`;
+    return false; // evitar reload da página
+  }
+
+  criarTabela();
 </script>
 
 </body>
