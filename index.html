@@ -3,31 +3,24 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rifa Online - Front-end Puro</title>
+<title>Rifa Online com Backend</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
-  h1 { margin-bottom: 10px; }
-  table { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 20px; }
-  td { border: 1px solid #aaa; padding: 8px; width: 50px; text-align: center; cursor: pointer; }
+  table { border-collapse: collapse; width: 640px; max-width: 100%; margin-bottom: 20px; }
+  td { border: 1px solid #aaa; padding: 8px; width: 48px; text-align: center; cursor: pointer; }
   td.disponivel { background: #d9f7d9; }
   td.reservado { background: #ffe4b3; cursor: not-allowed; }
-  td.pago { background: #c8e6c9; }
+  td.pago { background: #c8e6c9; cursor: not-allowed; }
   td.selecionado { outline: 3px solid #2e7d32; }
-  form { max-width: 520px; }
-  label { display: block; margin-top: 8px; }
-  input, button { padding: 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
-  button { background: #2e7d32; color: #fff; border: none; cursor: pointer; }
-  button[disabled] { background: #999; cursor: not-allowed; }
+  button, input { padding: 8px; font-size: 14px; width: 100%; box-sizing: border-box; margin-top: 6px; }
+  button:disabled { background: #999; cursor: not-allowed;}
   #mensagem { margin-top: 10px; font-weight: bold; }
-  .pix { margin-top: 16px; }
-  #painelOrganizador { display: none; border: 1px solid #aaa; padding: 14px; margin-top: 16px; }
-  .reservas-list { max-height: 180px; overflow: auto; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px; }
+  #painelOrganizador { margin-top: 20px; }
 </style>
 </head>
 <body>
 
-<h1>Rifa Online - Front-end Puro</h1>
-<p>Números: 00 a 99. Reservas expiram em 1 hora. Números pagos entram no sorteio.</p>
+<h1>Rifa Online</h1>
 
 <table id="gridNumeros" aria-label="grade de números"></table>
 
@@ -35,10 +28,10 @@
   <input type="hidden" id="numeroSelecionado" />
   <label for="nome">Nome</label>
   <input type="text" id="nome" required />
-  <label for="email">E-mail</label>
+  <label for="email">Email</label>
   <input type="email" id="email" required />
-  <label for="telefone">Telefone (livre)</label>
-  <input type="text" id="telefone" placeholder="Telefone" required />
+  <label for="telefone">Telefone</label>
+  <input type="text" id="telefone" required />
   <button type="submit" id="btnReservar" disabled>Reservar Número</button>
 </form>
 
@@ -46,35 +39,27 @@
 
 <div class="pix" id="pixContainer" style="display:none;">
   <h3>Pagamento via PIX</h3>
-  <p>Escaneie o QR Code abaixo para pagar a rifa:</p>
-  <img src="1000341679.jpg" alt="QR Code PIX" style="max-width:320px;width:100%;height:auto;" />
-  <p>Código de venda (exemplo): <span id="codigoVenda">RIF-0000-XYZ</span></p>
+  <img src="1000341679.jpg" alt="QR Code PIX" style="max-width: 320px; width: 100%; height:auto;" />
+  <p>Código de venda: <span id="codigoVenda"></span></p>
 </div>
 
-<div id="sorteioPainel" style="margin-top:20px;">
-  <button id="btnSortear" onclick="sortearNumero()" disabled>Sortear Número</button>
-  <div id="resultadoSorteio" style="font-size:1.6em; margin-top:8px; color:#006600;"></div>
-</div>
+<button id="btnSortear" disabled>Sortear Número</button>
+<div id="resultadoSorteio" style="margin-top:20px; font-weight: bold; color: green;"></div>
 
-<hr/>
-
-<button id="btnAbrirPainel" onclick="abrirPainel()">Abrir Painel do Organizador (senha)</button>
-
-<div id="painelOrganizador" aria-label="painel organizador">
-  <h3>Painel Organizador</h3>
-  <input id="senhaPainelInput" placeholder="Senha do painel" type="password" />
-  <button onclick="acessarPainel()">Entrar</button>
-
+<hr />
+<div id="painelOrganizador">
+  <h3>Painel do Organizador</h3>
+  <input id="senhaInput" placeholder="Digite a senha" type="password" />
+  <button id="btnLogin">Entrar</button>
   <div id="areaPainel" style="display:none;">
-    <button id="btnReset" onclick="resetRifa()">Resetar Rifa</button>
-    <div class="reservas-list" id="listaReservas"></div>
+    <button id="btnReset">Resetar Rifa</button>
+    <div id="listaReservas"></div>
   </div>
 </div>
 
 <script>
-  const TOTAL_NUMEROS = 100;
-  const EXPIRACAO_MS = 60 * 60 * 1000;
-  const SENHA_ORGANIZADOR = '8378';
+  const API_BASE = 'http://localhost:3000';
+  const SENHA_ADMIN = '8378';
 
   let reservas = {};
   let pagos = {};
@@ -83,172 +68,195 @@
   const grid = document.getElementById('gridNumeros');
   const btnReservar = document.getElementById('btnReservar');
   const inputNumero = document.getElementById('numeroSelecionado');
-  const txtNome = document.getElementById('nome');
-  const txtEmail = document.getElementById('email');
-  const txtTelefone = document.getElementById('telefone');
+  const nomeInput = document.getElementById('nome');
+  const emailInput = document.getElementById('email');
+  const telefoneInput = document.getElementById('telefone');
   const mensagem = document.getElementById('mensagem');
   const pixContainer = document.getElementById('pixContainer');
-  const codigoVenda = document.getElementById('codigoVenda');
+  const codigoVendaElem = document.getElementById('codigoVenda');
   const btnSortear = document.getElementById('btnSortear');
   const resultadoSorteio = document.getElementById('resultadoSorteio');
-  const btnAbrirPainel = document.getElementById('btnAbrirPainel');
-  const painelOrganizador = document.getElementById('painelOrganizador');
-  const senhaPainelInput = document.getElementById('senhaPainelInput');
+  const senhaInput = document.getElementById('senhaInput');
+  const btnLogin = document.getElementById('btnLogin');
   const areaPainel = document.getElementById('areaPainel');
   const listaReservas = document.getElementById('listaReservas');
+  let autorizado = false;
 
-  function carregarEstado(){
-    try {
-      reservas = JSON.parse(localStorage.getItem('rifaReservas')) || {};
-      pagos = JSON.parse(localStorage.getItem('rifaPagos')) || {};
-    } catch {
-      reservas = {};
-      pagos = {};
-    }
-  }
-
-  function salvarEstado(){
-    localStorage.setItem('rifaReservas', JSON.stringify(reservas));
-    localStorage.setItem('rifaPagos', JSON.stringify(pagos));
-  }
-
-  function limparExpiradas(){
-    const agora = Date.now();
-    for (const n in reservas){
-      if (agora - reservas[n].timestamp > EXPIRACAO_MS){
-        delete reservas[n];
-      }
-    }
-    salvarEstado();
-  }
-
-  function renderizarTabela(){
-    limparExpiradas();
-    carregarEstado();
+  function renderTable() {
     let html = '';
-    for(let i = 0; i < TOTAL_NUMEROS; i++){
-      const num = i.toString().padStart(2, '0');
+    for(let i=0; i<100; i++){
+      let numStr = String(i).padStart(2, '0');
       let cls = 'disponivel';
-      if(pagos[num]) cls = 'pago';
-      else if(reservas[num]) cls = 'reservado';
-      html += `<td class="${cls}" data-num="${num}">${num}</td>`;
-      if((i + 1) % 10 === 0) html += '</tr><tr>';
+      if(pagos[numStr]) cls = 'pago';
+      else if(reservas[numStr]) cls = 'reservado';
+      html += `<td class="${cls}" data-num="${numStr}">${numStr}</td>`;
+      if((i+1)%10===0) html += '</tr><tr>';
     }
     grid.innerHTML = '<tr>' + html + '</tr>';
   }
 
-  function init(){
-    renderizarTabela();
-    grid.addEventListener('click', (e) => {
-      if(e.target.tagName !== 'TD') return;
-      const num = e.target.dataset.num;
-      if(reservas[num] || pagos[num]) return;
-      const sel = grid.querySelectorAll('.selecionado');
-      sel.forEach(n => n.classList.remove('selecionado'));
-      e.target.classList.add('selecionado');
-      numeroSelecionado = num;
-      inputNumero.value = num;
-      btnReservar.disabled = false;
-      pixContainer.style.display = 'block';
-      mensagem.textContent = '';
-    });
-    btnReservar.disabled = true;
-  }
-
-  function reservarNumero(){
-    if(!numeroSelecionado){
-      mensagem.textContent = 'Selecione um número antes de reservar.';
-      return false;
-    }
-    const nome = txtNome.value.trim();
-    const email = txtEmail.value.trim();
-    const telefone = txtTelefone.value.trim();
-    if(!nome || !email || !telefone){
-      mensagem.textContent = 'Preencha nome, email e telefone.';
-      return false;
-    }
-    if(reservas[numeroSelecionado] || pagos[numeroSelecionado]){
-      mensagem.textContent = 'Número já reservado ou pago.';
-      return false;
-    }
-    const codigo = 'RIF-' + numeroSelecionado + '-' + Date.now().toString(36).toUpperCase();
-    reservas[numeroSelecionado] = { nome, email, telefone, timestamp: Date.now(), codigoVenda: codigo };
-    salvarEstado();
-    renderizarTabela();
-    formReserva.reset();
-    numeroSelecionado = null;
-    btnReservar.disabled = true;
-
-    // Abrir WhatsApp com mensagem
-    const msg = `Reserva de rifa
-Número: ${numeroSelecionado}
-Nome: ${nome}
-Email: ${email}
-Telefone: ${telefone}`;
-    window.open('https://wa.me/5531999999999?text=' + encodeURIComponent(msg), '_blank');
-
-    // Exibe QR Code e código de venda
-    pixContainer.style.display = 'block';
-    codigoVenda.textContent = codigo;
-    return false;
-  }
-
-  btnAbrirPainel.addEventListener('click', () => {
-    const senha = senhaPainelInput.value;
-    if(senha === SENHA_ORGANIZADOR){
-      areaPainel.style.display = 'block';
-      carregarPainel();
-    } else {
-      alert('Senha incorreta.');
-    }
-  });
-
-  function carregarPainel(){
-    carregarEstado();
-    listaReservas.innerHTML = '';
-    for(const n in reservas){
-      if(!pagos[n]){
-        const r = reservas[n];
-        listaReservas.innerHTML += `<div>Num ${n} • ${r.nome} • ${r.email} • ${r.telefone}
-          <button onclick="confirmarPagamento('${n}')">Confirmar Pagamento</button>
-          Código: ${r.codigoVenda}</div>`;
-      }
-    }
-  }
-
-  function confirmarPagamento(num){
-    if(reservas[num]){
-      pagos[num] = reservas[num];
-      delete reservas[num];
-      salvarEstado();
-      carregarPainel();
-      renderizarTabela();
+  async function fetchReservas(){
+    try {
+      const res = await fetch(`${API_BASE}/reservas`, {headers: {'x-admin-password': SENHA_ADMIN}});
+      const json = await res.json();
+      reservas = {};
+      pagos = {};
+      json.forEach(r => {
+        if(r.status === 'Pago' || r.status === 'Sorteado') pagos[r.numero] = r;
+        else reservas[r.numero] = r;
+      });
+      renderTable();
+      renderPainel();
       btnSortear.disabled = Object.keys(pagos).length === 0;
+    } catch(e){
+      console.error(e);
     }
   }
 
-  function sortearNumero(){
-    const chaves = Object.keys(pagos);
-    if(chaves.length === 0){
-      resultadoSorteio.textContent = 'Nenhum número pago para sortear';
+  grid.onclick = function(e){
+    if(e.target.tagName !== 'TD') return;
+    const num = e.target.dataset.num;
+    if(reservas[num] || pagos[num]) return;
+    numeroSelecionado = num;
+    inputNumero.value = num;
+    btnReservar.disabled = false;
+    pixContainer.style.display = 'none';
+    mensagem.textContent = '';
+    grid.querySelectorAll('.selecionado').forEach(td => td.classList.remove('selecionado'));
+    e.target.classList.add('selecionado');
+  };
+
+  btnReservar.onclick = async function(e){
+    e.preventDefault();
+    if(!numeroSelecionado) {
+      mensagem.textContent = 'Selecione um número antes.';
       return;
     }
-    const sorteado = chaves[Math.floor(Math.random() * chaves.length)];
-    resultadoSorteio.textContent = 'Vencedor: ' + sorteado;
+    const nome = nomeInput.value.trim();
+    const email = emailInput.value.trim();
+    const telefone = telefoneInput.value.trim();
+    if(!nome || !email || !telefone) {
+      mensagem.textContent = 'Preencha todos os dados.';
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/reservas`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({numero: numeroSelecionado, nome, email, telefone})
+      });
+      if(!res.ok) {
+        const err = await res.json();
+        mensagem.textContent = err.error || 'Erro ao reservar';
+        return;
+      }
+      const data = await res.json();
+      mensagem.textContent = `Número ${data.numero} reservado com sucesso!`;
+      numeroSelecionado = null;
+      btnReservar.disabled = true;
+      pixContainer.style.display = 'block';
+      codigoVendaElem.textContent = data.codigo_venda;
+      nomeInput.value = '';
+      emailInput.value = '';
+      telefoneInput.value = '';
+      await fetchReservas();
+
+      // Abrir WhatsApp para enviar reserva ao grupo
+      const msg = `Reserva de rifa
+Número: ${data.numero}
+Nome: ${data.nome}
+Email: ${data.email}
+Telefone: ${data.telefone}
+Código de venda: ${data.codigo_venda}`;
+      window.open('https://wa.me/5531999999999?text=' + encodeURIComponent(msg), '_blank');
+
+    } catch(e) {
+      mensagem.textContent = 'Erro de rede, tente novamente';
+      console.error(e);
+    }
+  };
+
+  btnLogin.onclick = function(){
+    if(senhaInput.value === SENHA_ADMIN){
+      autorizado = true;
+      areaPainel.style.display = 'block';
+      senhaInput.value = '';
+      fetchReservas();
+    } else {
+      alert('Senha incorreta');
+    }
+  };
+
+  function renderPainel(){
+    listaReservas.innerHTML = '';
+    Object.entries(reservas).forEach(([num, r]) => {
+      listaReservas.innerHTML += `<div>Num ${num} • ${r.nome} • ${r.email} • ${r.telefone} 
+        <button onclick="confirmarPagamento('${num}')">Confirmar pagamento</button> • Código: ${r.codigo_venda}</div>`;
+    });
   }
 
-  function resetRifa(){
-    if(confirm('Resetar a rifa? Isso apagará reservas e pagamentos.')){
-      reservas = {};
-      pagamentos = {};
-      salvarEstado();
-      renderizarTabela();
-      carregarPainel();
-      resultadoSorteio.textContent = '';
+  async function confirmarPagamento(num){
+    if(!autorizado) return alert('Acesso negado');
+    try {
+      const res = await fetch(`${API_BASE}/reservas/${num}/pagamento`, {
+        method: 'PATCH',
+        headers: {'x-admin-password': SENHA_ADMIN}
+      });
+      if(res.ok) {
+        mensagem.textContent = 'Pagamento confirmado para ' + num;
+        await fetchReservas();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Erro ao confirmar pagamento');
+      }
+    } catch(e){
+      alert('Erro de rede');
     }
   }
 
-  init();
+  btnSortear.onclick = async function(){
+    if(!autorizado) return alert('Acesso negado');
+    try {
+      const res = await fetch(`${API_BASE}/sorteio`, {
+        method: 'POST',
+        headers: {'x-admin-password': SENHA_ADMIN}
+      });
+      if(res.ok) {
+        const data = await res.json();
+        resultadoSorteio.textContent = data.message;
+        await fetchReservas();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Erro ao sortear');
+      }
+    } catch(e){
+      alert('Erro de rede');
+    }
+  };
+
+  document.getElementById('btnReset').onclick = async function(){
+    if(!autorizado) return alert('Acesso negado');
+    if(confirm('Deseja realmente resetar a rifa?')){
+      try {
+        const res = await fetch(`${API_BASE}/reset`, {
+          method: 'POST',
+          headers: {'x-admin-password': SENHA_ADMIN}
+        });
+        if(res.ok){
+          mensagem.textContent = 'Rifa resetada.';
+          resultadoSorteio.textContent = '';
+          fetchReservas();
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Erro ao resetar');
+        }
+      } catch(e){
+        alert('Erro de rede');
+      }
+    }
+  };
+
+  fetchReservas();
 </script>
 
 </body>
