@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rifa Online - Corrigido</title>
+<title>Rifa Online - com expiração de reservas</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
-  table { border-collapse: collapse; width: 640px; max-width: 100%; margin-bottom: 20px; }
-  td { border: 1px solid #aaa; padding: 8px; width: 48px; text-align: center; cursor: pointer; }
+  table { width: 100%; max-width: 700px; border-collapse: collapse; margin-bottom: 20px; }
+  th, td { border: 1px solid #aaa; padding: 6px; text-align: center; }
   td.disponivel { background: #d9f7d9; }
-  td.reservado { background: #ffe4b3; cursor: not-allowed; }
-  td.pago { background: #c8e6c9; cursor: not-allowed; }
+  td.reservado { background: #ffe4b3; color:#555; cursor: not-allowed; }
+  td.pago { background: #c8e6c9; color:#222; cursor: not-allowed; }
   td.selecionado { outline: 3px solid #2e7d32; }
   button, input { padding: 8px; font-size: 14px; width: 100%; box-sizing: border-box; margin-top: 6px; }
   button:disabled { background: #999; cursor: not-allowed;}
-  #mensagem { margin-top: 10px; font-weight: bold; }
+  #mensagem { margin-top: 12px; font-weight: bold; }
   #painelOrganizador { margin-top: 20px; }
 </style>
 </head>
@@ -22,7 +22,7 @@
 
 <h1>Rifa Online</h1>
 
-<table id="gridNumeros" aria-label="grade de números"></table>
+<table id="gridNumeros" aria-label="Grade de números"></table>
 
 <form id="formReserva" onsubmit="return reservarNumero()">
   <input type="hidden" id="numeroSelecionado" />
@@ -30,8 +30,8 @@
   <input type="text" id="nome" required />
   <label for="email">Email</label>
   <input type="email" id="email" required />
-  <label for="telefone">Telefone</label>
-  <input type="text" id="telefone" required />
+  <label for="telefone">Telefone (somente números, ex: 5531999999999)</label>
+  <input type="text" id="telefone" required pattern="[0-9]{10,15}" />
   <button type="submit" id="btnReservar" disabled>Reservar Número</button>
 </form>
 
@@ -53,12 +53,27 @@
   <button id="btnLogin">Entrar</button>
   <div id="areaPainel" style="display:none;">
     <button id="btnReset">Resetar Rifa</button>
-    <div id="listaReservas"></div>
+    <h4>Reservados</h4>
+    <table>
+      <thead>
+        <tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Código Venda</th><th>Ação</th></tr>
+      </thead>
+      <tbody id="tblReservados"></tbody>
+    </table>
+    <h4>Pagos</h4>
+    <table>
+      <thead>
+        <tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Código Venda</th></tr>
+      </thead>
+      <tbody id="tblPagos"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
   const SENHA_ADMIN = '8378';
+  const EXPIRACAO_MS = 60 * 60 * 1000; // 1 hora em ms
+
   let autorizado = false;
   let reservas = {};
   let pagos = {};
@@ -78,9 +93,12 @@
   const senhaInput = document.getElementById('senhaInput');
   const btnLogin = document.getElementById('btnLogin');
   const areaPainel = document.getElementById('areaPainel');
-  const listaReservas = document.getElementById('listaReservas');
+  const tblReservados = document.getElementById('tblReservados');
+  const tblPagos = document.getElementById('tblPagos');
 
   function renderTable() {
+    limparExpiradas();
+
     let html = '<tr>';
     for(let i=0; i<100; i++){
       const numStr = String(i).padStart(2, '0');
@@ -96,6 +114,20 @@
     grid.innerHTML = html;
   }
 
+  function limparExpiradas() {
+    const agora = Date.now();
+    let expiradoAlgo = false;
+    for(const num in reservas){
+      if(agora - reservas[num].timestamp > EXPIRACAO_MS){
+        delete reservas[num];
+        expiradoAlgo = true;
+      }
+    }
+    if(expiradoAlgo) {
+      salvarEstado();
+    }
+  }
+
   function carregarEstado() {
     reservas = JSON.parse(localStorage.getItem('rifaReservas') || '{}');
     pagos = JSON.parse(localStorage.getItem('rifaPagos') || '{}');
@@ -106,11 +138,26 @@
     localStorage.setItem('rifaPagos', JSON.stringify(pagos));
   }
 
+  function formatarTelefone(telefone) {
+    return telefone.replace(/D/g, ''); // remove caracteres nao numericos
+  }
+
+  function enviarWhatsApp(reserva, telefone) {
+    const telFormatado = formatarTelefone(telefone);
+    const mensagem = `Reserva de rifa
+Número: ${reserva.numero}
+Nome: ${reserva.nome}
+Email: ${reserva.email}
+Telefone: ${telFormatado}
+Código de venda: ${reserva.codigoVenda}`;
+    window.open(`https://wa.me/${telFormatado}?text=${encodeURIComponent(mensagem)}`, '_blank');
+  }
+
   function init() {
     carregarEstado();
     renderTable();
 
-    grid.addEventListener('click', (e) => {
+    grid.addEventListener('click', e => {
       if(e.target.tagName !== 'TD') return;
       const num = e.target.dataset.num;
       if(reservas[num] || pagos[num]) return;
@@ -123,6 +170,11 @@
       e.target.classList.add('selecionado');
     });
 
+    btnReservar.onclick = e => {
+      e.preventDefault();
+      reservarNumero();
+    };
+
     btnLogin.onclick = () => {
       if(senhaInput.value.trim() === SENHA_ADMIN){
         autorizado = true;
@@ -130,20 +182,12 @@
         senhaInput.value = '';
         carregarPainel();
         alert('Senha correta. Painel aberto!');
-      } else {
-        alert('Senha incorreta');
-      }
-    };
-
-    document.getElementById('formReserva').onsubmit = (e) => {
-      e.preventDefault();
-      reservarNumero();
-      return false;
+      } else alert('Senha incorreta');
     };
 
     document.getElementById('btnReset').onclick = () => {
       if(!autorizado) return alert('Acesso negado');
-      if(confirm('Deseja resetar a rifa?')){
+      if(confirm('Deseja realmente resetar a rifa?')){
         reservas = {};
         pagos = {};
         salvarEstado();
@@ -166,37 +210,29 @@
 
   function reservarNumero() {
     if(!numeroSelecionado){
-      mensagem.textContent = 'Selecione um número antes de reservar.';
+      mensagem.textContent = 'Selecione um número antes.';
       return false;
     }
     const nome = nomeInput.value.trim();
     const email = emailInput.value.trim();
     const telefone = telefoneInput.value.trim();
     if(!nome || !email || !telefone){
-      mensagem.textContent = 'Preencha nome, email e telefone.';
+      mensagem.textContent = 'Preencha todos os campos.';
       return false;
     }
     if(reservas[numeroSelecionado] || pagos[numeroSelecionado]){
       mensagem.textContent = 'Número já reservado ou pago.';
       return false;
     }
-
     const codigoVenda = 'RIF-' + numeroSelecionado + '-' + Date.now().toString(36).toUpperCase();
-    reservas[numeroSelecionado] = {nome, email, telefone, timestamp: Date.now(), codigoVenda};
+
+    reservas[numeroSelecionado] = {numero: numeroSelecionado, nome, email, telefone, timestamp: Date.now(), codigoVenda};
     salvarEstado();
     renderTable();
     document.getElementById('formReserva').reset();
     btnReservar.disabled = true;
-    numeroSelecionado = null;
 
-    // Enviar para grupo WhatsApp
-    const msg = `Reserva de rifa
-Número: ${numeroSelecionado}
-Nome: ${nome}
-Email: ${email}
-Telefone: ${telefone}
-Código de Venda: ${codigoVenda}`;
-    window.open('https://wa.me/5531999999999?text=' + encodeURIComponent(msg), '_blank');
+    enviarWhatsApp(reservas[numeroSelecionado], telefone);
 
     pixContainer.style.display = 'block';
     codigoVendaElem.textContent = codigoVenda;
@@ -205,13 +241,16 @@ Código de Venda: ${codigoVenda}`;
   }
 
   function carregarPainel(){
-    listaReservas.innerHTML = '';
+    tblReservados.innerHTML = '';
+    tblPagos.innerHTML = '';
+
     for(const num in reservas){
-      if(!pagos[num]) {
-        const r = reservas[num];
-        listaReservas.innerHTML += `<div>Num ${num} &bull; ${r.nome} &bull; ${r.email} &bull; ${r.telefone} 
-          <button onclick="confirmarPagamento('${num}')">Confirmar Pagamento</button> &bull; Código: ${r.codigoVenda}</div>`;
-      }
+      const r = reservas[num];
+      tblReservados.innerHTML += `<tr><td>${num}</td><td>${r.nome}</td><td>${r.email}</td><td>${r.telefone}</td><td>${r.codigoVenda}</td><td><button onclick="confirmarPagamento('${num}')">Confirmar</button></td></tr>`;
+    }
+    for(const num in pagos){
+      const r = pagos[num];
+      tblPagos.innerHTML += `<tr><td>${num}</td><td>${r.nome}</td><td>${r.email}</td><td>${r.telefone}</td><td>${r.codigoVenda}</td></tr>`;
     }
     btnSortear.disabled = Object.keys(pagos).length === 0;
   }
@@ -225,11 +264,10 @@ Código de Venda: ${codigoVenda}`;
     renderTable();
     mensagem.textContent = 'Pagamento confirmado para número ' + num;
   }
-
   window.confirmarPagamento = confirmarPagamento;
 
   init();
-</script>
 
+</script>
 </body>
 </html>
