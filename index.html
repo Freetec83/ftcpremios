@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rifa Online com Backend</title>
+<title>Rifa Online - Senha Corrigida</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
   table { border-collapse: collapse; width: 640px; max-width: 100%; margin-bottom: 20px; }
@@ -58,7 +58,7 @@
 </div>
 
 <script>
-  const API_BASE = 'http://localhost:3000';
+  const API_BASE = 'http://localhost:3000'; // Ajuste a URL conforme seu backend rodando
   const SENHA_ADMIN = '8378';
 
   let reservas = {};
@@ -177,7 +177,7 @@ Código de venda: ${data.codigo_venda}`;
   };
 
   btnLogin.onclick = function(){
-    if(senhaInput.value === SENHA_ADMIN){
+    if(senhaInput.value.trim() === SENHA_ADMIN){
       autorizado = true;
       areaPainel.style.display = 'block';
       senhaInput.value = '';
