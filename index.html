@@ -78,6 +78,7 @@
   let reservas = {};
   let pagos = {};
   let numeroSelecionado = null;
+  let tabelaDados = [];
 
   const grid = document.getElementById('gridNumeros');
   const btnReservar = document.getElementById('btnReservar');
@@ -96,15 +97,18 @@
   const tblReservados = document.getElementById('tblReservados');
   const tblPagos = document.getElementById('tblPagos');
 
-  // Exemplo de dados com colunas A, B, C e Número para renderização
-  const tabelaDados = [];
-  for(let i = 0; i < 100; i++) { 
-    tabelaDados.push({
-      Numero: String(i).padStart(2, '0'),
-      A: 'Valor A ' + i,
-      B: 'Valor B ' + i,
-      C: 'Valor C ' + i
-    });
+  // URL do seu Google Apps Script Web App
+  const urlApi = 'https://script.google.com/macros/s/AKfycbzwV1asUQVG1_gyYx-DxGzQPyTHgzeRsetgT-1DusI1BT9Zj26gtaAcF86BKODhmFqI/exec';
+
+  async function carregarDados() {
+    try {
+      const res = await fetch(urlApi);
+      tabelaDados = await res.json();
+      renderTableFromData(tabelaDados);
+    } catch(e) {
+      mensagem.textContent = 'Erro ao carregar dados da planilha.';
+      console.error('Error loading data:', e);
+    }
   }
 
   function limparExpiradas() {
@@ -236,7 +240,8 @@ Código de venda: ${reserva.codigoVenda}`;
 
   function init() {
     carregarEstado();
-    renderTableFromData(tabelaDados);
+    carregarDados(); // chama o carregamento dinâmico dos dados
+    // Não chama renderTableFromData diretamente aqui pois será chamada após carregarDados
 
     grid.addEventListener('click', e => {
       if(e.target.tagName !== 'TD') return;
