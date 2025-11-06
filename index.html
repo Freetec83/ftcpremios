@@ -22,6 +22,8 @@
 
 <h1>Rifa Online</h1>
 
+<button id="btnAtualizar">Atualizar Tabela</button>
+
 <table id="gridNumeros" aria-label="Grade de números"></table>
 
 <form id="formReserva" onsubmit="return reservarNumero()">
@@ -96,20 +98,25 @@
   const areaPainel = document.getElementById('areaPainel');
   const tblReservados = document.getElementById('tblReservados');
   const tblPagos = document.getElementById('tblPagos');
+  const btnAtualizar = document.getElementById('btnAtualizar');
 
-  // URL do seu Google Apps Script Web App
-  const urlApi = 'https://script.google.com/macros/s/AKfycbzwV1asUQVG1_gyYx-DxGzQPyTHgzeRsetgT-1DusI1BT9Zj26gtaAcF86BKODhmFqI/exec';
+  const urlApi = 'https://script.google.com/macros/s/AKfycbwcH9j9idHDYJ5pHes2m_zWkL3e5rpqYVvCMAqN4vgXh3WP8qBkLITWbv2XVq_fDx7e/exec';
 
   async function carregarDados() {
     try {
       const res = await fetch(urlApi);
       tabelaDados = await res.json();
       renderTableFromData(tabelaDados);
+      mensagem.textContent = '';
     } catch(e) {
       mensagem.textContent = 'Erro ao carregar dados da planilha.';
       console.error('Error loading data:', e);
     }
   }
+
+  btnAtualizar.addEventListener('click', () => {
+    carregarDados();
+  });
 
   function limparExpiradas() {
     const agora = Date.now();
@@ -240,9 +247,8 @@ Código de venda: ${reserva.codigoVenda}`;
 
   function init() {
     carregarEstado();
-    carregarDados(); // chama o carregamento dinâmico dos dados
-    // Não chama renderTableFromData diretamente aqui pois será chamada após carregarDados
-
+    carregarDados(); // carregar os dados iniciais
+    // Não chamar renderTableFromData diretamente aqui, pois já é chamada em carregarDados
     grid.addEventListener('click', e => {
       if(e.target.tagName !== 'TD') return;
       const tr = e.target.closest('tr');
@@ -293,10 +299,12 @@ Código de venda: ${reserva.codigoVenda}`;
       const sorteado = Object.keys(pagos)[Math.floor(Math.random() * Object.keys(pagos).length)];
       resultadoSorteio.textContent = 'Vencedor: ' + sorteado;
     };
+
   }
 
   init();
 
 </script>
+
 </body>
 </html>
