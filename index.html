@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Rifa Online - com tabela dinâmica</title>
+<title>Rifa Online - com integração Web App</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 20px; }
   table { width: 100%; max-width: 700px; border-collapse: collapse; margin-bottom: 20px; }
@@ -72,7 +72,7 @@
 
 <script>
   const SENHA_ADMIN = '8378';
-  const EXPIRACAO_MS = 60 * 60 * 1000; // 1 hora
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxwLJxXi8Sg9SIaDWUKCmJ9YM50DK_r9UafiuB7ZCoszGlNtyjxtSxSV9V360bIK3l9/exec';
 
   let autorizado = false;
   let reservas = {};
@@ -96,70 +96,54 @@
   const tblReservados = document.getElementById('tblReservados');
   const tblPagos = document.getElementById('tblPagos');
 
-  // Exemplo de dados com colunas A, B, C e Número para renderização
-  const tabelaDados = [];
-  for(let i = 0; i < 100; i++) { 
-    tabelaDados.push({
-      Numero: String(i).padStart(2, '0'),
-      A: 'Valor A ' + i,
-      B: 'Valor B ' + i,
-      C: 'Valor C ' + i
-    });
-  }
+  let tabelaDados = [];
 
-  function limparExpiradas() {
-    const agora = Date.now();
-    let expiradoAlgo = false;
-    for(const num in reservas){
-      if(agora - reservas[num].timestamp > EXPIRACAO_MS){
-        delete reservas[num];
-        expiradoAlgo = true;
-      }
-    }
-    if(expiradoAlgo) salvarEstado();
-  }
+  function fetchDados() {
+    fetch(WEB_APP_URL)
+      .then(res => res.json())
+      .then(data => {
+        tabelaDados = data.map(item => ({
+          Numero: item.numero,
+          Status: item.status,
+          Nome: item.nome,
+          Email: item.email,
+          Telefone: item.telefone,
+          CodigoVenda: item.codigoVenda,
+          Timestamp: item.timestamp
+        }));
 
-  function carregarEstado() {
-    reservas = JSON.parse(localStorage.getItem('rifaReservas') || '{}');
-    pagos = JSON.parse(localStorage.getItem('rifaPagos') || '{}');
-  }
+        reservas = {};
+        pagos = {};
 
-  function salvarEstado() {
-    localStorage.setItem('rifaReservas', JSON.stringify(reservas));
-    localStorage.setItem('rifaPagos', JSON.stringify(pagos));
-  }
-
-  function enviarWhatsApp(reserva, telefone) {
-    const telFormatado = telefone.replace(/D/g, '');
-    const mensagemWs = `Reserva de rifa
-Número: ${reserva.numero}
-Nome: ${reserva.nome}
-Email: ${reserva.email}
-Telefone: ${telFormatado}
-Código de venda: ${reserva.codigoVenda}`;
-    window.open(`https://wa.me/${telFormatado}?text=${encodeURIComponent(mensagemWs)}`, '_blank');
+        data.forEach(item => {
+          if(item.status === 'reservado') reservas[item.numero] = item;
+          else if(item.status === 'pago') pagos[item.numero] = item;
+        });
+        renderTableFromData(tabelaDados);
+        carregarPainel();
+      })
+      .catch(() => {
+        mensagem.textContent = 'Erro ao carregar dados da planilha.';
+      });
   }
 
   function renderTableFromData(data) {
-    limparExpiradas();
-
-    let html = '<thead><tr><th>Número</th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>';
+    let html = '<thead><tr><th>Número</th><th>Status</th><th>Nome</th><th>Email</th><th>Telefone</th></tr></thead><tbody>';
     data.forEach(row => {
-      const numStr = row.Numero;
       let cls = 'disponivel';
-      if(pagos[numStr]) cls = 'pago';
-      else if(reservas[numStr]) cls = 'reservado';
+      if(pagos[row.Numero]) cls = 'pago';
+      else if(reservas[row.Numero]) cls = 'reservado';
 
-      html += `<tr class="${cls}" data-num="${numStr}">
-                 <td>${numStr}</td>
-                 <td>${row.A}</td>
-                 <td>${row.B}</td>
-                 <td>${row.C}</td>
+      html += `<tr class="${cls}" data-num="${row.Numero}">
+                 <td>${row.Numero}</td>
+                 <td>${row.Status || ''}</td>
+                 <td>${row.Nome || ''}</td>
+                 <td>${row.Email || ''}</td>
+                 <td>${row.Telefone || ''}</td>
                </tr>`;
     });
     html += '</tbody>';
     grid.innerHTML = html;
-
     grid.querySelectorAll('tr').forEach(tr => {
       tr.addEventListener('click', e => {
         if(!tr.dataset.num) return;
@@ -170,7 +154,7 @@ Código de venda: ${reserva.codigoVenda}`;
         btnReservar.disabled = false;
         pixContainer.style.display = 'none';
         mensagem.textContent = '';
-        grid.querySelectorAll('.selecionado').forEach(td => td.classList.remove('selecionado'));
+        grid.querySelectorAll('.selecionado').forEach(el => el.classList.remove('selecionado'));
         tr.classList.add('selecionado');
       });
     });
@@ -194,18 +178,52 @@ Código de venda: ${reserva.codigoVenda}`;
     }
     const codigoVenda = 'RIF-' + numeroSelecionado + '-' + Date.now().toString(36).toUpperCase();
 
-    reservas[numeroSelecionado] = {numero: numeroSelecionado, nome, email, telefone, timestamp: Date.now(), codigoVenda};
-    salvarEstado();
-    renderTableFromData(tabelaDados);
-    document.getElementById('formReserva').reset();
-    btnReservar.disabled = true;
+    const reserva = {
+      numero: numeroSelecionado,
+      status: 'reservado',
+      nome,
+      email,
+      telefone,
+      codigoVenda,
+      timestamp: Date.now()
+    };
 
-    enviarWhatsApp(reservas[numeroSelecionado], telefone);
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(reserva)
+    })
+    .then(res => res.json())
+    .then(response => {
+      if(response.result === 'success'){
+        reservas[numeroSelecionado] = reserva;
+        carregarDados();
+        document.getElementById('formReserva').reset();
+        btnReservar.disabled = true;
+        mensagem.textContent = 'Número reservado com sucesso! Aguarde pagamento.';
+        pixContainer.style.display = 'block';
+        codigoVendaElem.textContent = codigoVenda;
+        enviarWhatsApp(reserva, telefone);
+      } else {
+        mensagem.textContent = 'Erro ao reservar número.';
+      }
+    })
+    .catch(() => {
+      mensagem.textContent = 'Erro na comunicação com servidor.';
+    });
 
-    pixContainer.style.display = 'block';
-    codigoVendaElem.textContent = codigoVenda;
-    mensagem.textContent = 'Número reservado, aguarde pagamento.';
     return false;
+  }
+
+  function enviarWhatsApp(reserva, telefone) {
+    const telFormatado = telefone.replace(/D/g, '');
+    const msg = `Reserva de rifa
+Número: ${reserva.numero}
+Nome: ${reserva.nome}
+Email: ${reserva.email}
+Telefone: ${telFormatado}
+Código de venda: ${reserva.codigoVenda}`;
+    window.open(`https://wa.me/${telFormatado}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   function carregarPainel(){
@@ -225,69 +243,85 @@ Código de venda: ${reserva.codigoVenda}`;
 
   function confirmarPagamento(num){
     if(!autorizado) return alert('Acesso negado');
-    pagos[num] = reservas[num];
-    delete reservas[num];
-    salvarEstado();
-    carregarPainel();
-    renderTableFromData(tabelaDados);
-    mensagem.textContent = 'Pagamento confirmado para número ' + num;
+    const reserva = reservas[num];
+    const pagamento = {...reserva, status:'pago'};
+    fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pagamento)
+    })
+    .then(res => res.json())
+    .then(response => {
+      if(response.result === 'success'){
+        pagos[num] = pagamento;
+        delete reservas[num];
+        carregarDados();
+        mensagem.textContent = `Pagamento confirmado para número ${num}`;
+      } else {
+        mensagem.textContent = 'Erro ao confirmar pagamento.';
+      }
+    });
   }
   window.confirmarPagamento = confirmarPagamento;
 
-  function init() {
-    carregarEstado();
-    renderTableFromData(tabelaDados);
+  function resetarRifa(){
+    if(!autorizado) return alert('Acesso negado');
+    if(!confirm('Deseja realmente resetar a rifa?')) return;
 
-    grid.addEventListener('click', e => {
-      if(e.target.tagName !== 'TD') return;
-      const tr = e.target.closest('tr');
-      if(!tr || !tr.dataset.num) return;
-      if(reservas[tr.dataset.num] || pagos[tr.dataset.num]) return;
-      numeroSelecionado = tr.dataset.num;
-      inputNumero.value = numeroSelecionado;
-      btnReservar.disabled = false;
-      pixContainer.style.display = 'none';
-      mensagem.textContent = '';
-      grid.querySelectorAll('.selecionado').forEach(td => td.classList.remove('selecionado'));
-      tr.classList.add('selecionado');
+    // Para reset, reaplicar status vazio, remover reservas e pagos
+    const promessas = [];
+    Object.values(reservas).forEach(r => {
+      const resetData = {...r, status: '', nome:'', email:'', telefone:'', codigoVenda:'', timestamp:''};
+      promessas.push(fetch(WEB_APP_URL, {
+        method:'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(resetData)
+      }));
+    });
+    Object.values(pagos).forEach(r => {
+      const resetData = {...r, status: '', nome:'', email:'', telefone:'', codigoVenda:'', timestamp:''};
+      promessas.push(fetch(WEB_APP_URL, {
+        method:'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(resetData)
+      }));
     });
 
-    btnReservar.onclick = e => {
-      e.preventDefault();
-      reservarNumero();
-    };
+    Promise.all(promessas).then(() => {
+      reservas = {};
+      pagos = {};
+      carregarDados();
+      resultadoSorteio.textContent = '';
+    });
+  }
 
-    btnLogin.onclick = () => {
-      if(senhaInput.value.trim() === SENHA_ADMIN){
-        autorizado = true;
-        areaPainel.style.display = 'block';
-        senhaInput.value = '';
-        carregarPainel();
-        alert('Senha correta. Painel aberto!');
-      } else alert('Senha incorreta');
-    };
+  document.getElementById('btnReset').onclick = resetarRifa;
 
-    document.getElementById('btnReset').onclick = () => {
-      if(!autorizado) return alert('Acesso negado');
-      if(confirm('Deseja realmente resetar a rifa?')){
-        reservas = {};
-        pagos = {};
-        salvarEstado();
-        renderTableFromData(tabelaDados);
-        carregarPainel();
-        resultadoSorteio.textContent = '';
-      }
-    };
+  btnSortear.onclick = () => {
+    if(!autorizado) return alert('Acesso negado');
+    const keysPagos = Object.keys(pagos);
+    if(keysPagos.length === 0){
+      resultadoSorteio.textContent = 'Nenhum número pago para sortear';
+      return;
+    }
+    const sorteado = keysPagos[Math.floor(Math.random() * keysPagos.length)];
+    resultadoSorteio.textContent = 'Vencedor: ' + sorteado;
+  };
 
-    btnSortear.onclick = () => {
-      if(!autorizado) return alert('Acesso negado');
-      if(Object.keys(pagos).length === 0){
-        resultadoSorteio.textContent = 'Nenhum número pago para sortear';
-        return;
-      }
-      const sorteado = Object.keys(pagos)[Math.floor(Math.random() * Object.keys(pagos).length)];
-      resultadoSorteio.textContent = 'Vencedor: ' + sorteado;
-    };
+  btnLogin.onclick = () => {
+    if(senhaInput.value.trim() === SENHA_ADMIN){
+      autorizado = true;
+      areaPainel.style.display = 'block';
+      senhaInput.value = '';
+      carregarDados();
+      alert('Senha correta. Painel aberto!');
+    } else {
+      alert('Senha incorreta');
+    }
+  };
+
+  function init(){
+    carregarDados();
   }
 
   init();
