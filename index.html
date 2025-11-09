@@ -2,58 +2,91 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Reserva de Número - Rifa Online</title>
+  <title>Rifa Online - Painel Completo</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+    body { font-family: Arial, sans-serif; max-width: 1100px; margin: 20px auto; }
+    h1, h2 { margin-bottom: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
     label { display: block; margin-top: 10px; }
     input, button { width: 100%; padding: 10px; margin-top: 5px; }
     button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #45a049; }
+    button.secondary { background-color: #6c757d; }
+    button:hover { opacity: 0.9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     .mensagem { margin-top: 15px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-<h2>Reservar Número na Rifa</h2>
+<h1>Rifa Online - Sistema Completo</h1>
 
-<form id="formReserva">
-  <label for="numero">Número (00 a 99):</label>
-  <input type="number" id="numero" name="numero" min="0" max="99" required />
+<div class="grid">
 
-  <label for="nome">Nome Completo:</label>
-  <input type="text" id="nome" name="nome" required />
+  <div class="card" aria-label="formulario-de-reserva">
+    <h2>Formulário de Reserva</h2>
+    <form id="formReserva">
+      <label for="numero">Número (00 a 99):</label>
+      <input type="number" id="numero" name="numero" min="0" max="99" placeholder="Ex: 07" required />
 
-  <label for="email">E-mail:</label>
-  <input type="email" id="email" name="email" required />
+      <label for="nome">Nome Completo:</label>
+      <input type="text" id="nome" name="nome" placeholder="Seu nome" required />
 
-  <label for="telefone">Telefone:</label>
-  <input type="tel" id="telefone" name="telefone" required />
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" name="email" placeholder="exemplo@dominio.com" required />
 
-  <button type="submit">Reservar</button>
-</form>
+      <label for="telefone">Telefone:</label>
+      <input type="tel" id="telefone" name="telefone" placeholder="(xx) xxxx-xxxx" required />
 
-<div class="mensagem" id="mensagem"></div>
+      <button type="submit">Reservar Número</button>
+    </form>
+    <div class="mensagem" id="mensagemReserva"></div>
+  </div>
+
+  <div class="card" aria-label="painel-organizador">
+    <h2>Painel Organizador</h2>
+    <p>Aqui será exibida a lista de números reservados, status e código de venda.</p>
+    <table id="tabelaOrganizador" aria-label="tabela-organizador">
+      <thead>
+        <tr><th>Número</th><th>Nome</th><th>Status</th><th>Código Venda</th></tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <!-- Dados carregados dinamicamente -->
+      </tbody>
+    </table>
+
+    <button id="btnSortear" class="secondary" title="Sortear número vencedor">Sortear Vencedor</button>
+    <div class="mensagem" id="mensagemSorteio"></div>
+  </div>
+
+</div>
 
 <script>
   const form = document.getElementById('formReserva');
-  const mensagem = document.getElementById('mensagem');
+  const mensagemReserva = document.getElementById('mensagemReserva');
+  const corpoTabela = document.getElementById('corpoTabela');
+  const btnSortear = document.getElementById('btnSortear');
+  const mensagemSorteio = document.getElementById('mensagemSorteio');
+
+  // URL do Web App publicado
+  const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzmIhPOWfRr9lWw-3X9tLZ8CBN6n2_0Ud_-E72hsI2bvqzCcF9bJK_a7iRI-NsvJyXm/exec';
 
   form.addEventListener('submit', e => {
     e.preventDefault();
-    mensagem.textContent = 'Enviando reserva...';
+    mensagemReserva.textContent = 'Enviando reserva...';
 
     const dados = {
-      numero: form.numero.value,
-      nome: form.nome.value,
-      email: form.email.value,
-      telefone: form.telefone.value,
+      numero: form.numero.value.padStart(2, '0'),
+      nome: form.nome.value.trim(),
+      email: form.email.value.trim(),
+      telefone: form.telefone.value.trim(),
       status: 'reservado',
-      codigoVenda: 'RIF' + form.numero.value + '-' + Date.now().toString(36).toUpperCase(),
+      codigoVenda: 'RIF' + form.numero.value.padStart(2, '0') + '-' + Date.now().toString(36).toUpperCase(),
       timestamp: Date.now()
     };
 
-    // Substitua pela URL do seu Web App
-    fetch('https://script.google.com/macros/s/AKfycbzmIhPOWfRr9lWw-3X9tLZ8CBN6n2_0Ud_-E72hsI2bvqzCcF9bJK_a7iRI-NsvJyXm/exec', {
+    fetch(WEBAPP_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dados)
@@ -61,16 +94,58 @@
     .then(res => res.json())
     .then(res => {
       if(res.result === 'success'){
-        mensagem.textContent = 'Reserva realizada com sucesso! Código: ' + dados.codigoVenda;
+        mensagemReserva.textContent = 'Reserva feita com sucesso! Código: ' + dados.codigoVenda;
         form.reset();
+        carregarPainel(); // Atualizar painel após reserva
       } else {
-        mensagem.textContent = 'Erro na reserva: ' + (res.message || 'tente novamente');
+        mensagemReserva.textContent = 'Erro: ' + (res.message || 'Tente novamente');
       }
     })
     .catch(() => {
-      mensagem.textContent = 'Erro de comunicação com o servidor.';
+      mensagemReserva.textContent = 'Erro na comunicação com o servidor.';
     });
   });
+
+  // Função para carregar painel organizador (exemplo com chamada GET para o backend que deve retornar JSON)
+  function carregarPainel() {
+    // Supondo que você tenha uma função doGet que retorna os dados em JSON (implemente no Apps Script)
+    fetch(WEBAPP_URL + '?action=getPanelData')
+      .then(res => res.json())
+      .then(data => {
+        corpoTabela.innerHTML = '';
+        if (!data || data.length === 0) {
+          corpoTabela.innerHTML = '<tr><td colspan="4">Nenhuma reserva encontrada.</td></tr>';
+          return;
+        }
+        data.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.numero}</td><td>${item.nome}</td><td>${item.status}</td><td>${item.codigoVenda || ''}</td>`;
+          corpoTabela.appendChild(tr);
+        });
+      })
+      .catch(() => {
+        corpoTabela.innerHTML = '<tr><td colspan="4">Erro ao carregar dados do painel.</td></tr>';
+      });
+  }
+
+  btnSortear.addEventListener('click', () => {
+    // Sorteia um número aleatório já reservado (exemplo)
+    fetch(WEBAPP_URL + '?action=drawWinner')
+      .then(res => res.json())
+      .then(res => {
+        if(res.result === 'success' && res.winner){
+          mensagemSorteio.textContent = 'Número sorteado: ' + res.winner.numero + ' - ' + res.winner.nome;
+        } else {
+          mensagemSorteio.textContent = 'Erro ao sortear: ' + (res.message || 'Tente novamente');
+        }
+      })
+      .catch(() => {
+        mensagemSorteio.textContent = 'Erro na comunicação com o servidor.';
+      });
+  });
+
+  // Carrega o painel ao iniciar a página
+  carregarPainel();
 </script>
 
 </body>
