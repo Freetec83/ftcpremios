@@ -3,185 +3,247 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rifa Online - Protótipo</title>
+  <title>Rifa Online Completa</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 10px;
-      background: #f9f9f9;
-    }
-    header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    header img {
-      max-width: 150px;
-    }
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
-    }
-    .grid {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .box {
-      background: white;
-      padding: 20px;
-      flex: 1 1 400px;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-    button {
-      background-color: #007ACC;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #005fa3;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      text-align: left;
-      padding: 8px;
-    }
-    th {
-      background: #007ACC;
-      color: white;
-    }
-    .message {
-      margin-top: 12px;
-      font-weight: bold;
-      min-height: 1.5em;
-    }
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 10px; background: #f4f4f4; }
+    header { text-align: center; margin-bottom: 20px; }
+    header img { max-width: 150px; }
+    h1 { color: #333; }
+    form, .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+    label { display: block; margin: 10px 0 4px; }
+    input, button, textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+    button { background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 10px; }
+    button:hover { background-color: #0056b3; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #007bff; color: white; }
+    .hidden { display: none; }
+    #msg, #msgAdmin, #msgSortear { margin-top: 10px; font-weight: bold; }
+    .info-pix { margin-top: 10px; background: #e9ffe9; padding: 10px; border: 1px solid #0a0; border-radius: 5px; }
+    .info-whatsapp { margin-top: 10px; background: #e9f7ff; padding: 10px; border: 1px solid #0077cc; border-radius: 5px;}
   </style>
 </head>
 <body>
 
 <header>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Chrome_icon_%282011%29.svg/768px-Google_Chrome_icon_%282011%29.svg.png" alt="Logo Rifa" />
-  <h1>Rifa Online - Protótipo</h1>
-  <p>Reserve seu número e acompanhe o painel do organizador</p>
+  <img src="https://dummyimage.com/150x80/007bff/ffffff.png&text=Logo+Rifa" alt="Logo da Rifa" />
+  <h1>Rifa Online Completa</h1>
 </header>
 
-<div class="grid">
-
-  <section class="box" aria-label="Formulário de Reserva">
+<section>
+  <form id="formReserva">
     <h2>Reservar Número</h2>
-    <form id="formReserva">
-      <label for="numero">Número (00 a 99)</label>
-      <input type="number" id="numero" name="numero" min="0" max="99" required />
-      
-      <label for="nome">Nome Completo</label>
-      <input type="text" id="nome" name="nome" required />
-      
-      <label for="email">E-mail</label>
-      <input type="email" id="email" name="email" required />
-      
-      <label for="telefone">Telefone</label>
-      <input type="tel" id="telefone" name="telefone" required />
-      
-      <button type="submit">Reservar Número</button>
-    </form>
-    <div class="message" id="msgReserva"></div>
-  </section>
+    <label for="numero">Número (00 a 99):</label>
+    <input type="number" id="numero" name="numero" min="0" max="99" required />
+    
+    <label for="nome">Nome Completo:</label>
+    <input type="text" id="nome" name="nome" required />
+    
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required />
+    
+    <label for="telefone">Telefone:</label>
+    <input type="tel" id="telefone" name="telefone" required />
+    
+    <button type="submit">Reservar</button>
+    <div id="msg" role="alert"></div>
+  </form>
+</section>
 
-  <section class="box" aria-label="Painel Organizador">
-    <h2>Painel Organizador</h2>
+<section class="info-pix">
+  <h3>Pagamento Pix</h3>
+  <p>Chave Pix: seu-pix@exemplo.com</p>
+  <p>Após fazer o pagamento, mantenha seu número reservado no sistema.</p>
+</section>
+
+<section class="info-whatsapp">
+  <h3>Grupo WhatsApp para Comunicações</h3>
+  <p>Use o link abaixo para acessar o grupo da rifa e acompanhar as novidades:</p>
+  <a href="https://chat.whatsapp.com/seulinkdoGrupoExemplo" target="_blank" rel="noopener noreferrer">Entrar no Grupo WhatsApp</a>
+</section>
+
+<hr />
+
+<section>
+  <h2>Área do Organizador</h2>
+  <label for="senhaAdmin">Senha:</label>
+  <input type="password" id="senhaAdmin" autocomplete="off" />
+  <button id="btnLogin">Entrar</button>
+  <div id="msgAdmin" role="alert"></div>
+
+  <div id="panelOrganizador" class="hidden panel">
     <button id="btnSortear">Sortear Vencedor</button>
-    <div class="message" id="msgSorteio"></div>
-    <table aria-label="Tabela de Reservas">
+    <button id="btnResetar">Resetar Reservas Expiradas</button>
+    <div id="msgSortear" role="alert"></div>
+    <table id="tabelaReservas" aria-label="Reservas da Rifa">
       <thead>
-        <tr><th>Número</th><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Status</th></tr>
+        <tr>
+          <th>Número</th>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th>Código Venda</th>
+          <th>Ações</th>
+        </tr>
       </thead>
-      <tbody id="tabelaReservas">
-        <!-- Linhas de reservas dinâmicas -->
-        <tr><td colspan="5" style="text-align:center; color:#888;">Nenhuma reserva cadastrada ainda</td></tr>
-      </tbody>
+      <tbody></tbody>
     </table>
-  </section>
-
-</div>
+  </div>
+</section>
 
 <script>
-  // Este é só o protótipo visual. Emproxima no futuro com backend pra funcionar.
+  const urlBase = 'https://script.google.com/macros/s/AKfycbzdCpdolpv-dm3x03mgcIHniKAkJ3wnH0E8qpgonvWeVgB1utn3HNysAPSPlcSSX2Wi/exec';
 
-  const form = document.getElementById('formReserva');
-  const msgReserva = document.getElementById('msgReserva');
+  const formReserva = document.getElementById('formReserva');
+  const msg = document.getElementById('msg');
+  const senhaAdmin = document.getElementById('senhaAdmin');
+  const btnLogin = document.getElementById('btnLogin');
+  const msgAdmin = document.getElementById('msgAdmin');
+  const panelOrganizador = document.getElementById('panelOrganizador');
+  const tabelaReservasBody = document.querySelector('#tabelaReservas tbody');
   const btnSortear = document.getElementById('btnSortear');
-  const msgSorteio = document.getElementById('msgSorteio');
-  const tabelaReservas = document.getElementById('tabelaReservas');
+  const btnResetar = document.getElementById('btnResetar');
+  const msgSortear = document.getElementById('msgSortear');
 
-  let reservas = [];
+  let adminSenha = '';
 
-  form.addEventListener('submit', (e) => {
+  formReserva.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const numero = form.numero.value.padStart(2,'0');
-    const nome = form.nome.value.trim();
-    const email = form.email.value.trim();
-    const telefone = form.telefone.value.trim();
+    msg.textContent = '';
+    const data = {
+      numero: formReserva.numero.value.toString().padStart(2,'0'),
+      nome: formReserva.nome.value.trim(),
+      email: formReserva.email.value.trim(),
+      telefone: formReserva.telefone.value.trim(),
+      status: 'reservado',
+      codigoVenda: 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
+      timestamp: Date.now()
+    };
 
-    // Simula adicionar reserva - futuramente usa backend
-    if (reservas.some(r => r.numero === numero)) {
-      msgReserva.textContent = 'Número já reservado!';
-      return;
+    try {
+      const res = await fetch(urlBase, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if(json.result === 'success') {
+        msg.textContent = 'Reserva feita com sucesso!';
+        formReserva.reset();
+      } else {
+        msg.textContent = 'Erro ao reservar: ' + json.message;
+      }
+    } catch(err) {
+      msg.textContent = 'Erro na comunicação com o servidor.';
     }
-
-    reservas.push({numero, nome, email, telefone, status: 'reservado'});
-    preencherTabela();
-    msgReserva.textContent = 'Reserva registrada com sucesso!';
-    form.reset();
   });
 
-  btnSortear.addEventListener('click', () => {
-    if (reservas.length === 0) {
-      msgSorteio.textContent = 'Nenhuma reserva para sortear.';
+  btnLogin.addEventListener('click', () => {
+    if(senhaAdmin.value.trim() === '') {
+      msgAdmin.textContent = 'Informe a senha!';
       return;
     }
-    const sorteado = reservas[Math.floor(Math.random() * reservas.length)];
-    msgSorteio.textContent = `Número sorteado: ${sorteado.numero} - ${sorteado.nome}`;
+    adminSenha = senhaAdmin.value.trim();
+    carregarPainel();
   });
 
-  function preencherTabela() {
-    if (reservas.length === 0) {
-      tabelaReservas.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Nenhuma reserva cadastrada ainda</td></tr>';
-      return;
+  async function carregarPainel() {
+    msgAdmin.textContent = '';
+    try {
+      const res = await fetch(`${urlBase}?action=getPanelData&admin=${encodeURIComponent(adminSenha)}`);
+      const dados = await res.json();
+      if(!Array.isArray(dados)) {
+        msgAdmin.textContent = 'Senha incorreta ou erro.';
+        return;
+      }
+      montarTabela(dados);
+      panelOrganizador.classList.remove('hidden');
+      msgAdmin.textContent = 'Área do organizador ativa.';
+    } catch {
+      msgAdmin.textContent = 'Erro ao carregar painel.';
     }
-    tabelaReservas.innerHTML = reservas.map(r =>
-      `<tr>
-        <td>${r.numero}</td>
-        <td>${r.nome}</td>
-        <td>${r.email}</td>
-        <td>${r.telefone}</td>
-        <td>${r.status}</td>
-      </tr>`).join('');
   }
 
-  preencherTabela();
+  function montarTabela(dados) {
+    tabelaReservasBody.innerHTML = '';
+    dados.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.numero || ''}</td>
+        <td>${item.nome || ''}</td>
+        <td>${item.email || ''}</td>
+        <td>${item.telefone || ''}</td>
+        <td>${item.status || ''}</td>
+        <td>${item.codigoVenda || ''}</td>
+        <td>
+          ${item.status !== 'pago' ? `<button onclick="marcarPagamento('${item.numero}')">Marcar Pago</button>` : 'Pago'}
+        </td>
+      `;
+      tabelaReservasBody.appendChild(tr);
+    });
+  }
+
+  async function marcarPagamento(numero) {
+    try {
+      const data = {numero, status:'pago'};
+      const res = await fetch(urlBase, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if(json.result === 'success') {
+        msgSortear.textContent = 'Pagamento marcado.';
+        carregarPainel();
+      } else {
+        msgSortear.textContent = 'Erro: ' + json.message;
+      }
+    } catch {
+      msgSortear.textContent = 'Erro na comunicação.';
+    }
+  }
+
+  btnResetar.addEventListener('click', async () => {
+    try {
+      const res = await fetch(`${urlBase}?action=resetReservations&admin=${encodeURIComponent(adminSenha)}`);
+      const json = await res.json();
+      if(json.result === 'success') {
+        msgSortear.textContent = 'Reset feito com sucesso.';
+        carregarPainel();
+      } else {
+        msgSortear.textContent = 'Erro no reset.';
+      }
+    } catch {
+      msgSortear.textContent = 'Erro na comunicação.';
+    }
+  });
+
+  btnSortear.addEventListener('click', async () => {
+    msgSortear.textContent = 'Sorteando... Aguarde 30 segundos.';
+    let count = 30;
+    const intervalId = setInterval(() => {
+      count--;
+      msgSortear.textContent = `Sorteando... ${count} segundos restantes`;
+      if(count <= 0) {
+        clearInterval(intervalId);
+        sorteioFinalizar();
+      }
+    }, 1000);
+  });
+
+  async function sorteioFinalizar() {
+    try {
+      const res = await fetch(`${urlBase}?action=drawWinner&admin=${encodeURIComponent(adminSenha)}`);
+      const json = await res.json();
+      if(json.result === 'success') {
+        msgSortear.textContent = `Vencedor: Número ${json.winner.numero} - ${json.winner.nome}`;
+      } else {
+        msgSortear.textContent = 'Erro no sorteio: ' + json.message;
+      }
+    } catch {
+      msgSortear.textContent = 'Erro na comunicação do sorteio.';
+    }
+  }
+
 </script>
 
 </body>
