@@ -1,27 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Sistema Rifa Online</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; background: #f4f4f4; padding: 10px; }
-    header, section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 0 8px rgba(0,0,0,0.1); }
-    h1, h2 { color: #333; }
-    label { display: block; margin-top: 10px; }
-    input, button { padding: 10px; font-size: 16px; width: 100%; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 15px; }
-    button:hover { background-color: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #007bff; color: white; }
-    .reserved { background-color: #fff3cd; }
-    .paid { background-color: #d4edda; }
-    #msg, #msgAdmin, #msgSortear, #msgInfoRifa { font-weight: bold; margin-top: 10px; }
-    .winner { font-weight: bold; font-size: 1.2em; color: #0b3d91; margin-top: 1em; padding: 10px; border: 2px solid #4285f4; }
-    #qrCodePlaceholder { width: 180px; height: 180px; border: 2px dashed #ccc; display:flex; justify-content:center; align-items:center; color: #aaa; margin-top: 10px; }
-    a { color: #007bff; text-decoration: none; }
-  </style>
+<meta charset="UTF-8" />
+<title>Rifa Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 10px; background: #f4f4f4; }
+  header, section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 0 8px #ddd; }
+  h1, h2 { color: #333; }
+  label { display: block; margin-top: 10px; }
+  input, button { padding: 10px; font-size: 16px; width: 100%; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+  button { background-color: #007bff; color: white; border: none; cursor: pointer; margin-top: 15px; }
+  button:hover { background-color: #0056b3; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+  th { background-color: #007bff; color: white; }
+  .reserved { background-color: #fff3cd; }
+  .paid { background-color: #d4edda; }
+  #msg, #msgAdmin, #msgSortear, #msgInfoRifa { font-weight: bold; margin-top: 10px; }
+  .winner { font-weight: bold; font-size: 1.2em; color: #0b3d91; margin-top: 1em; padding: 10px; border: 2px solid #4285f4; }
+</style>
 </head>
 <body>
 
@@ -34,7 +32,7 @@
     <h2>Reservar Número</h2>
     <label for="numero">Número (00 a 99)</label>
     <input type="number" id="numero" min="0" max="99" required />
-    <label for="nome">Nome Completo</label>
+    <label for="nome">Nome</label>
     <input type="text" id="nome" required />
     <label for="email">Email</label>
     <input type="email" id="email" required />
@@ -48,12 +46,14 @@
 <section>
   <h2>Pagamento Pix</h2>
   <p>Chave Pix: 9ce163ce-4d97-425a-9a99-445802f3e871</p>
-  <div id="qrCodePlaceholder">Insira aqui sua imagem JPEG do QR Code (externa)</div>
+  <div id="qrCodePlaceholder" style="width:180px; height:180px; border:2px dashed #ccc; display:flex; justify-content:center; align-items:center; color:#aaa; margin-top: 10px;">
+    Insira aqui a imagem JPEG do QR Code (externa)
+  </div>
   <p>Mantenha seu número reservado após o pagamento ser confirmado.</p>
 </section>
 
 <section>
-  <h2>Grupo Oficial WhatsApp</h2>
+  <h2>Grupo WhatsApp</h2>
   <a href="https://chat.whatsapp.com/seulinkdoGrupoExemplo" target="_blank" rel="noopener noreferrer">Entrar no Grupo</a>
 </section>
 
@@ -62,7 +62,7 @@
 <section>
   <h2>Área do Organizador</h2>
   <label for="senhaAdmin">Senha:</label>
-  <input type="password" id="senhaAdmin" placeholder="Digite a senha do organizador" />
+  <input type="password" id="senhaAdmin" placeholder="Senha do organizador" />
   <button id="btnLogin">Entrar</button>
   <div id="msgAdmin"></div>
 
@@ -87,7 +87,15 @@
     <h3>Reservas</h3>
     <table>
       <thead>
-        <tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Status</th><th>Código Venda</th><th>Ações</th></tr>
+        <tr>
+          <th>Número</th>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th>Código Venda</th>
+          <th>Ações</th>
+        </tr>
       </thead>
       <tbody id="tabelaReservasBody"></tbody>
     </table>
@@ -125,7 +133,7 @@ formReserva.addEventListener('submit', async e => {
     email: document.getElementById('email').value.trim(),
     telefone: document.getElementById('telefone').value.trim(),
     status: 'reservado',
-    codigoVenda: 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6, '0'),
+    codigoVenda: 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
     timestamp: Date.now()
   };
   try {
@@ -133,16 +141,16 @@ formReserva.addEventListener('submit', async e => {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    const resp = await res.json();
-    if(resp.result === 'success'){
-      msg.textContent = 'Reserva realizada com sucesso!';
+    const json = await res.json();
+    if(json.result === 'success'){
+      msg.textContent = 'Reserva feita com sucesso!';
       formReserva.reset();
       carregarPainel();
     } else {
-      msg.textContent = 'Erro na reserva: ' + resp.message;
+      msg.textContent = 'Erro na reserva: ' + json.message;
     }
   } catch {
-    msg.textContent = 'Erro ao conectar ao servidor.';
+    msg.textContent = 'Erro na comunicação com o servidor.';
   }
 });
 
@@ -163,16 +171,16 @@ async function carregarPainel(){
     const res = await fetch(`${urlBase}?action=getPanelData&admin=${encodeURIComponent(adminSenha)}`);
     const dados = await res.json();
     if(!Array.isArray(dados.data)) {
-      msgAdmin.textContent = dados.message || 'Senha incorreta ou erro ao carregar dados.';
+      msgAdmin.textContent = dados.message || 'Senha incorreta ou erro.';
       panelOrganizador.style.display = 'none';
       return;
     }
     montarTabela(dados.data);
     await carregarInfoRifa();
     panelOrganizador.style.display = 'block';
-    msgAdmin.textContent = 'Painel do organizador ativo.';
+    msgAdmin.textContent = 'Área do organizador ativa.';
   } catch {
-    msgAdmin.textContent = 'Erro ao carregar o painel.';
+    msgAdmin.textContent = 'Erro ao carregar painel.';
   }
 }
 
@@ -197,9 +205,9 @@ function montarTabela(dados){
 }
 
 async function marcarPagamento(numero){
-  try{
-    const res = await fetch(urlBase,{
-      method:'POST',
+  try {
+    const res = await fetch(urlBase, {
+      method: 'POST',
       body: JSON.stringify({numero, status:'pago'})
     });
     const json = await res.json();
@@ -222,7 +230,7 @@ btnResetar.addEventListener('click', async () => {
       msgSortear.textContent = 'Reservas expiradas resetadas.';
       carregarPainel();
     } else {
-      msgSortear.textContent = 'Erro ao resetar as reservas.';
+      msgSortear.textContent = 'Erro ao resetar reservas.';
     }
   } catch {
     msgSortear.textContent = 'Erro na comunicação.';
@@ -232,24 +240,24 @@ btnResetar.addEventListener('click', async () => {
 btnSortear.addEventListener('click', () => {
   msgSortear.textContent = 'Sorteando... Aguarde 30 segundos.';
   let count = 30;
-  const intervalId = setInterval(() => {
+  const interval = setInterval(() => {
     count--;
     msgSortear.textContent = `Sorteando... ${count} segundos restantes.`;
     if(count <= 0){
-      clearInterval(intervalId);
-      finalizarSorteio();
+      clearInterval(interval);
+      realizarSorteio();
     }
   }, 1000);
 });
 
-async function finalizarSorteio(){
+async function realizarSorteio(){
   try {
     const res = await fetch(`${urlBase}?action=drawWinner&admin=${encodeURIComponent(adminSenha)}`);
     const json = await res.json();
     if(json.result === 'success'){
-      msgSortear.textContent = '';
       divGanhador.style.display = 'block';
       divGanhador.textContent = `Último vencedor: N°${json.data.numero} - ${json.data.nome}`;
+      msgSortear.textContent = '';
     } else {
       msgSortear.textContent = 'Erro no sorteio: ' + json.message;
     }
@@ -273,8 +281,8 @@ async function carregarInfoRifa(){
         divGanhador.style.display = 'none';
       }
     }
-  } catch {
-    console.error('Erro ao carregar info da rifa.');
+  } catch(e) {
+    console.error('Erro ao carregar info da rifa', e);
   }
 }
 
@@ -294,14 +302,15 @@ btnSalvarInfo.addEventListener('click', async () => {
     });
     const json = await res.json();
     if(json.result === 'success'){
-      msgInfoRifa.textContent = 'Informações salvas.';
+      msgInfoRifa.textContent = 'Informações salvas com sucesso.';
     } else {
       msgInfoRifa.textContent = 'Erro ao salvar informações.';
     }
   } catch {
-    msgInfoRifa.textContent = 'Erro ao comunicar com o servidor.';
+    msgInfoRifa.textContent = 'Erro na comunicação com o servidor.';
   }
 });
+
 </script>
 
 </body>
