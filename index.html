@@ -2,57 +2,51 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <title>Sistema Rifa - Sem QR Code</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rifa Online com Pix</title>
   <style>
-    body { font-family: Arial; max-width: 900px; margin: 20px auto; padding: 10px; background: #f4f4f4; }
-    header { text-align: center; margin-bottom: 20px; }
-    h1,h2,h3 { color: #333; }
-    form, .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 20px;}
-    label { display: block; margin: 10px 0 4px; }
-    input, button { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
-    button { background: #007bff; color: white; border: none; cursor: pointer; margin-top: 15px; }
-    button:hover { background: #0056b3; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background: #007bff; color: #fff; }
-    .reserved { background-color: #fff3cd; }
-    .paid { background-color: #d4edda; }
-    #msg, #msgAdmin, #msgSortear, #msgInfoRifa { font-weight: bold; margin-top: 10px; }
-    .winner { font-weight: bold; font-size: 1.2em; margin-top: 1em; padding: 10px; border: 2px solid #4285f4; color: #0b3d91; }
-    a { color: #007bff; }
+    body { max-width: 900px; margin: 20px auto; font-family: Arial, sans-serif; background: #f4f4f4; padding: 10px; }
+    header, section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 10px #aaa; }
+    h1, h2 { color: #333; }
+    label { display: block; margin: 10px 0 5px; }
+    input, button { padding: 10px; font-size: 16px; width: 100%; border-radius: 6px; border: 1px solid #ccc; }
+    button { background-color: #007bff; color: #fff; border:none; cursor:pointer; }
+    button:hover { background-color: #0056b3; }
+    #qrCodePlaceholder { width: 180px; height: 180px; border: 2px dashed #aaa; margin-top: 15px; display: flex; justify-content: center; align-items: center; color: #aaa; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Rifa Online com Pagamento Pix</h1>
+  <h1>Rifa Online - Reserva</h1>
 </header>
 
-<form id="formReserva">
-  <h2>Faça sua reserva</h2>
-  <label for="numero">Número (00 a 99):</label>
-  <input type="number" id="numero" name="numero" min="0" max="99" required />
-  <label for="nome">Nome Completo:</label>
-  <input type="text" id="nome" name="nome" required />
-  <label for="email">Email:</label>
-  <input type="email" id="email" name="email" required />
-  <label for="telefone">Telefone:</label>
-  <input type="tel" id="telefone" name="telefone" required />
-  <button type="submit">Reservar</button>
-  <div id="msg"></div>
-</form>
+<section>
+  <form id="formReserva">
+    <h2>Reservar Número</h2>
+    <label for="numero">Número (00 a 99):</label>
+    <input type="number" id="numero" min="0" max="99" required />
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" required />
+    <label for="email">Email:</label>
+    <input type="email" id="email" required />
+    <label for="telefone">Telefone:</label>
+    <input type="tel" id="telefone" required />
+    <button type="submit">Reservar</button>
+    <div id="msg"></div>
+  </form>
+</section>
 
 <section>
   <h2>Pagamento via Pix</h2>
   <p>Chave Pix: 9ce163ce-4d97-425a-9a99-445802f3e871</p>
-  <img src="https://api.qrserver.com/v1/create-qr-code/?data=pix:9ce163ce-4d97-425a-9a99-445802f3e871&size=180x180" alt="QR Code Pix" />
-  <p>Após realizar o pagamento, seu número ficará reservado.</p>
+  <div id="qrCodePlaceholder">Coloque aqui a imagem JPEG do QR Code (externa)</div>
+  <p>Após pagamento, mantenha seu número reservado no sistema.</p>
 </section>
 
 <section>
-  <h2>Grupo WhatsApp Oficial</h2>
-  <a href="https://chat.whatsapp.com/seulinkdoGrupoExemplo" target="_blank">Clique para entrar no grupo</a>
+  <h2>Grupo WhatsApp</h2>
+  <a href="https://chat.whatsapp.com/seulinkdoGrupoExemplo" target="_blank">Entrar no grupo do WhatsApp</a>
 </section>
 
 <hr />
@@ -72,28 +66,26 @@
     <input type="text" id="valor" />
     <label for="dataSorteio">Data do Sorteio:</label>
     <input type="date" id="dataSorteio" />
-    <button id="btnSalvarInfo">Salvar Configurações</button>
+    <button id="btnSalvarInfo">Salvar</button>
     <div id="msgInfoRifa"></div>
 
     <h3>Último Ganhador</h3>
-    <div id="divGanhador" class="winner" style="display:none;"></div>
+    <div class="winner" id="divGanhador" style="display:none;"></div>
 
     <button id="btnSortear">Sortear Vencedor</button>
     <button id="btnResetar">Resetar Reservas Expiradas</button>
     <div id="msgSortear"></div>
 
-    <h3>Tabela de Reservas</h3>
+    <h3>Lista de Reservas</h3>
     <table>
-      <thead>
-        <tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Status</th><th>Código Venda</th><th>Ações</th></tr>
-      </thead>
+      <thead><tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Status</th><th>Código Venda</th><th>Ações</th></tr></thead>
       <tbody id="tabelaReservasBody"></tbody>
     </table>
   </div>
 </section>
 
 <script>
-const urlBase = 'https://script.google.com/macros/s/AKfycbzuylb-MrYzygka-cxrwAUnOMJu2m3JnyfEMQOP0vASQxAyv_6J9m_QxgGt6gV6XUjT/exec';
+const urlBase = 'https://script.google.com/macros/s/AKfycbzpNSBB3Hr1ZtDCz2_DYGJOA6vo3p80PFKhI6nTAlQBRxehzmPbVpz6cXqi0CrthitX/exec';
 
 const formReserva = document.getElementById('formReserva');
 const msg = document.getElementById('msg');
@@ -114,14 +106,14 @@ const msgSortear = document.getElementById('msgSortear');
 
 let adminSenha = '';
 
-formReserva.addEventListener('submit', async (e) => {
+formReserva.addEventListener('submit', async e => {
   e.preventDefault();
   msg.textContent = '';
   const data = {
-    numero: formReserva.numero.value.toString().padStart(2,'0'),
-    nome: formReserva.nome.value.trim(),
-    email: formReserva.email.value.trim(),
-    telefone: formReserva.telefone.value.trim(),
+    numero: document.getElementById('numero').value.toString().padStart(2,'0'),
+    nome: document.getElementById('nome').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    telefone: document.getElementById('telefone').value.trim(),
     status: 'reservado',
     codigoVenda: 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
     timestamp: Date.now()
@@ -132,13 +124,11 @@ formReserva.addEventListener('submit', async (e) => {
       body: JSON.stringify(data)
     });
     const json = await res.json();
-    if(json.result === 'success') {
-      msg.textContent = 'Reserva feita com sucesso!';
-      formReserva.reset();
-    } else {
-      msg.textContent = 'Erro ao reservar: ' + json.message;
-    }
-  } catch(e) {
+    msg.textContent = json.result === 'success' ?
+      'Reserva feita com sucesso!' :
+      'Erro na reserva: ' + json.message;
+    if(json.result === 'success') formReserva.reset();
+  } catch {
     msg.textContent = 'Erro na comunicação com o servidor.';
   }
 });
@@ -167,7 +157,7 @@ async function carregarPainel(){
     await carregarInfoRifa();
     panelOrganizador.style.display = 'block';
     msgAdmin.textContent = 'Área do organizador ativa.';
-  } catch(e) {
+  } catch {
     msgAdmin.textContent = 'Erro ao carregar painel.';
   }
 }
@@ -199,13 +189,11 @@ async function marcarPagamento(numero){
       body: JSON.stringify({numero, status:'pago'})
     });
     const json = await res.json();
-    if(json.result === 'success'){
-      msgSortear.textContent = 'Pagamento marcado.';
-      carregarPainel();
-    } else {
-      msgSortear.textContent = 'Erro: ' + json.message;
-    }
-  } catch(e){
+    msgSortear.textContent = json.result === 'success' ?
+      'Pagamento marcado.' :
+      'Erro: ' + json.message;
+    if(json.result === 'success') carregarPainel();
+  } catch {
     msgSortear.textContent = 'Erro na comunicação.';
   }
 }
@@ -214,13 +202,11 @@ btnResetar.addEventListener('click', async () => {
   try {
     const res = await fetch(`${urlBase}?action=resetReservations&admin=${encodeURIComponent(adminSenha)}`);
     const json = await res.json();
-    if(json.result === 'success'){
-      msgSortear.textContent = 'Reset feito com sucesso.';
-      carregarPainel();
-    } else {
-      msgSortear.textContent = 'Erro no reset.';
-    }
-  } catch(e){
+    msgSortear.textContent = json.result === 'success' ?
+      'Reset feito com sucesso.' :
+      'Erro no reset.';
+    if(json.result === 'success') carregarPainel();
+  } catch {
     msgSortear.textContent = 'Erro na comunicação.';
   }
 });
@@ -228,14 +214,14 @@ btnResetar.addEventListener('click', async () => {
 btnSortear.addEventListener('click', () => {
   msgSortear.textContent = 'Sorteando... Aguarde 30 segundos.';
   let count = 30;
-  const interval = setInterval(() => {
+  const intervalId = setInterval(() => {
     count--;
     msgSortear.textContent = `Sorteando... ${count} segundos restantes`;
     if(count <= 0){
-      clearInterval(interval);
+      clearInterval(intervalId);
       sorteioFinalizar();
     }
-  },1000);
+  }, 1000);
 });
 
 async function sorteioFinalizar(){
@@ -249,7 +235,7 @@ async function sorteioFinalizar(){
     } else {
       msgSortear.textContent = 'Erro no sorteio: ' + json.message;
     }
-  } catch (e){
+  } catch {
     msgSortear.textContent = 'Erro na comunicação do sorteio.';
   }
 }
@@ -269,8 +255,8 @@ async function carregarInfoRifa(){
         divGanhador.style.display = 'none';
       }
     }
-  } catch(e){
-    console.error('Erro ao carregar info da rifa', e);
+  } catch(e) {
+    console.error('Erro ao carregar info da rifa:', e);
   }
 }
 
@@ -283,19 +269,16 @@ btnSalvarInfo.addEventListener('click', async () => {
     dataSorteio: dataSorteioInput.value,
     admin: adminSenha
   };
-
   try {
     const res = await fetch(urlBase, {
       method: 'POST',
       body: JSON.stringify(info)
     });
     const json = await res.json();
-    if(json.result === 'success'){
-      msgInfoRifa.textContent = 'Informações salvas com sucesso.';
-    } else {
-      msgInfoRifa.textContent = 'Erro ao salvar informações.';
-    }
-  } catch(e){
+    msgInfoRifa.textContent = json.result === 'success' ?
+      'Informações salvas com sucesso.' :
+      'Erro ao salvar informações.';
+  } catch(e) {
     msgInfoRifa.textContent = 'Erro na comunicação com o servidor.';
   }
 });
