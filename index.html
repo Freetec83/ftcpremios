@@ -1,280 +1,75 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
-<meta charset="UTF-8" />
-<title>Rifa Online</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  table { border-collapse: collapse; width: 100%; max-width: 700px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-  tr.disponivel { background: #dff0d8; cursor: pointer; }
-  tr.reservado { background: #fcf8e3; }
-  tr.pago { background: #cce5ff; }
-  tr.selecionado { outline: 3px solid green; }
-  button:disabled { background: #ccc; cursor: not-allowed; }
-  #painelReserva, #painelOrganizador { margin-top: 30px; }
-  .mensagem { margin-top: 15px; font-weight: bold; color: green; }
-  .erro { color: red; }
-  #pixQRCode { font-weight: bold; background: #f9f9f9; padding: 10px; margin-top: 10px; display: inline-block;}
-</style>
+  <meta charset="UTF-8" />
+  <title>Reserva de Número - Rifa Online</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+    label { display: block; margin-top: 10px; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; }
+    button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #45a049; }
+    .mensagem { margin-top: 15px; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-<h1>Rifa Online</h1>
+<h2>Reservar Número na Rifa</h2>
 
-<table id="tabelaNumeros" aria-label="Tabela dos números da rifa">
-  <thead>
-    <tr><th>Número</th><th>Status</th><th>Nome</th><th>Email</th><th>Telefone</th></tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<form id="formReserva">
+  <label for="numero">Número (00 a 99):</label>
+  <input type="number" id="numero" name="numero" min="0" max="99" required />
 
-<div id="painelReserva" style="display:none;">
-  <h2>Reservar Número <span id="numeroSelecionado"></span></h2>
-  <form id="formReserva">
-    <input type="text" id="nome" placeholder="Seu nome" required /><br/><br/>
-    <input type="email" id="email" placeholder="Seu e-mail" required /><br/><br/>
-    <input type="tel" id="telefone" placeholder="Seu telefone (max 2 reservas)" required /><br/><br/>
-    <button type="submit">Reservar</button>
-  </form>
-  <div class="mensagem" id="mensagemReserva"></div>
-  <div id="pixInfo" style="display:none;">
-    <h3>Pagamento via PIX</h3>
-    <div id="pixQRCode">Chave PIX: e8483deb-c16c-41e4-930a-515ec89efa43</div>
-    <p>Após o pagamento, confirme seu pagamento no grupo do WhatsApp:</p>
-    <a id="linkWhatsApp" href="https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg?mode=wwt" target="_blank">Entrar no grupo do WhatsApp</a>
-  </div>
-</div>
+  <label for="nome">Nome Completo:</label>
+  <input type="text" id="nome" name="nome" required />
 
-<div id="painelOrganizador" style="display:none; margin-top: 40px;">
-  <h2>Painel do Organizador</h2>
-  <button id="btnSortear" disabled>Sorteio (entre números pagos)</button>
-  <div class="mensagem" id="resultadoSorteio"></div>
-  <h3>Reservas Pendentes</h3>
-  <table id="tabelaReservas" style="width:100%">
-    <thead><tr><th>Número</th><th>Nome</th><th>Email</th><th>Telefone</th><th>Ação</th></tr></thead>
-    <tbody></tbody>
-  </table>
-  <button id="btnResetar">Resetar Rifa</button>
-  <div class="mensagem" id="mensagemOrganizador"></div>
-</div>
+  <label for="email">E-mail:</label>
+  <input type="email" id="email" name="email" required />
 
-<label for="senhaOrganizador">Senha do Organizador:</label>
-<input type="password" id="senhaOrganizador" />
-<button id="btnLogin">Entrar</button>
+  <label for="telefone">Telefone:</label>
+  <input type="tel" id="telefone" name="telefone" required />
+
+  <button type="submit">Reservar</button>
+</form>
+
+<div class="mensagem" id="mensagem"></div>
 
 <script>
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxwLJxXi8Sg9SIaDWUKCmJ9YM50DK_r9UafiuB7ZCoszGlNtyjxtSxSV9V360bIK3l9/exec';
+  const form = document.getElementById('formReserva');
+  const mensagem = document.getElementById('mensagem');
 
-let numeros = [];
-let reservas = {};
-let pagos = {};
-let numeroSelecionado = null;
-const senhaCorreta = '8378';
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    mensagem.textContent = 'Enviando reserva...';
 
-const tabelaNumerosBody = document.querySelector('#tabelaNumeros tbody');
-const tabelaReservasBody = document.querySelector('#tabelaReservas tbody');
-const painelReserva = document.getElementById('painelReserva');
-const numeroSelecionadoSpan = document.getElementById('numeroSelecionado');
-const mensagemReserva = document.getElementById('mensagemReserva');
-const pixInfo = document.getElementById('pixInfo');
-const linkWhatsApp = document.getElementById('linkWhatsApp');
-const painelOrganizador = document.getElementById('painelOrganizador');
-const resultadoSorteio = document.getElementById('resultadoSorteio');
-const mensagemOrganizador = document.getElementById('mensagemOrganizador');
-const btnSortear = document.getElementById('btnSortear');
-const senhaInput = document.getElementById('senhaOrganizador');
-const btnLogin = document.getElementById('btnLogin');
-const btnResetar = document.getElementById('btnResetar');
+    const dados = {
+      numero: form.numero.value,
+      nome: form.nome.value,
+      email: form.email.value,
+      telefone: form.telefone.value,
+      status: 'reservado',
+      codigoVenda: 'RIF' + form.numero.value + '-' + Date.now().toString(36).toUpperCase(),
+      timestamp: Date.now()
+    };
 
-function carregarDados() {
-  fetch(WEB_APP_URL)
-  .then(res => res.json())
-  .then(data => {
-    numeros = data;
-    reservas = {};
-    pagos = {};
-    numeros.forEach(n => {
-      if(n.status === 'reservado') reservas[n.numero] = n;
-      else if(n.status === 'pago') pagos[n.numero] = n;
-    });
-    preencherTabela();
-    preencherPainelOrganizador();
-    btnSortear.disabled = Object.keys(pagos).length === 0;
-  })
-  .catch(err => alert('Erro ao carregar dados: ' + err));
-}
-
-function preencherTabela() {
-  tabelaNumerosBody.innerHTML = '';
-  numeros.forEach(n => {
-    const tr = document.createElement('tr');
-    tr.textContent = '';
-    tr.className = n.status || 'disponivel';
-    tr.dataset.numero = n.numero;
-    tr.innerHTML = `
-      <td>${n.numero}</td>
-      <td>${n.status || 'Disponível'}</td>
-      <td>${n.nome || ''}</td>
-      <td>${n.email || ''}</td>
-      <td>${n.telefone || ''}</td>
-    `;
-    if(tr.className === 'disponivel') {
-      tr.style.cursor = 'pointer';
-      tr.onclick = () => selecionarNumero(n.numero);
-    }
-    tabelaNumerosBody.appendChild(tr);
-  });
-}
-
-function selecionarNumero(numero) {
-  if(Object.values(reservas).filter(r => r.telefone === document.getElementById('telefone').value).length >= 2){
-    mensagemReserva.textContent = 'Você já reservou o número máximo de 2!';
-    return;
-  }
-  numeroSelecionado = numero;
-  numeroSelecionadoSpan.textContent = numero;
-  painelReserva.style.display = 'block';
-  mensagemReserva.textContent = '';
-  pixInfo.style.display = 'none';
-  document.getElementById('formReserva').reset();
-}
-
-document.getElementById('formReserva').onsubmit = function(e) {
-  e.preventDefault();
-  if(!numeroSelecionado) {
-    mensagemReserva.textContent = 'Selecione um número antes de reservar.';
-    return;
-  }
-  const nome = document.getElementById('nome').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const telefone = document.getElementById('telefone').value.trim();
-
-  if(Object.values(reservas).filter(r => r.telefone === telefone).length >= 2){
-    mensagemReserva.textContent = 'Você só pode reservar até 2 números por telefone.';
-    return;
-  }
-
-  const reserva = {
-    numero: numeroSelecionado,
-    status: 'reservado',
-    nome,
-    email,
-    telefone,
-    codigoVenda: 'RIF-' + numeroSelecionado + '-' + Date.now().toString(36).toUpperCase(),
-    timestamp: Date.now()
-  };
-
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(reserva)
-  })
-  .then(res => res.json())
-  .then(resp => {
-    if(resp.result === 'success'){
-      mensagemReserva.textContent = 'Número reservado! Faça o pagamento via PIX abaixo e confirme no grupo WhatsApp.';
-      pixInfo.style.display = 'block';
-      enviarMensagemWhatsApp(nome, telefone, reserva.codigoVenda, numeroSelecionado);
-      carregarDados();
-    } else {
-      mensagemReserva.textContent = 'Erro ao reservar. Tente novamente.';
-    }
-  })
-  .catch(() => mensagemReserva.textContent = 'Erro na comunicação com o servidor.');
-};
-
-function enviarMensagemWhatsApp(nome, telefone, codigo, numero) {
-  const texto = encodeURIComponent(
-    `Olá! Realizei a reserva do número ${numero} na rifa. Código: ${codigo}. Nome: ${nome}. Telefone: ${telefone}.`
-  );
-  const url = `https://wa.me/${telefone.replace(/D/g,'')}?text=${texto}`;
-  window.open(url, '_blank');
-}
-
-// Painel do organizador
-btnLogin.onclick = () => {
-  if(senhaInput.value === senhaCorreta){
-    painelOrganizador.style.display = 'block';
-    btnLogin.disabled = true;
-    senhaInput.disabled = true;
-    mensagemOrganizador.textContent = '';
-  } else {
-    mensagemOrganizador.textContent = 'Senha incorreta';
-  }
-};
-
-function preencherPainelOrganizador() {
-  tabelaReservasBody.innerHTML = '';
-  for(const key in reservas){
-    const r = reservas[key];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${r.numero}</td><td>${r.nome}</td><td>${r.email}</td><td>${r.telefone}</td>
-      <td><button onclick="confirmarPagamento('${r.numero}')">Confirmar pagamento</button></td>
-    `;
-    tabelaReservasBody.appendChild(tr);
-  }
-}
-
-function confirmarPagamento(numero) {
-  const reserva = reservas[numero];
-  const pagamento = {...reserva, status: 'pago'};
-  fetch(WEB_APP_URL, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(pagamento)
-  })
-  .then(res => res.json())
-  .then(resp => {
-    if(resp.result === 'success'){
-      mensagemOrganizador.textContent = `Pagamento confirmado para o número ${numero}.`;
-      carregarDados();
-    } else {
-      mensagemOrganizador.textContent = 'Erro ao confirmar pagamento.';
-    }
-  })
-  .catch(() => mensagemOrganizador.textContent = 'Erro na comunicação');
-}
-
-btnSortear.onclick = () => {
-  resultadoSorteio.textContent = 'Sorteando... aguarde 1 minuto.';
-  btnSortear.disabled = true;
-  setTimeout(() => {
-    const pagosKeys = Object.keys(pagos);
-    if(pagosKeys.length === 0){
-      resultadoSorteio.textContent = 'Nenhum número pago para sortear.';
-      btnSortear.disabled = false;
-      return;
-    }
-    const vencedor = pagosKeys[Math.floor(Math.random()*pagosKeys.length)];
-    resultadoSorteio.textContent = `Número sorteado: ${vencedor}`;
-    btnSortear.disabled = false;
-  }, 60000);
-};
-
-btnResetar.onclick = () => {
-  if(!confirm('Confirma resetar a rifa?')){
-    return;
-  }
-  const resetPromises = [];
-  [...Object.values(reservas), ...Object.values(pagos)].forEach(item => {
-    const vazio = { ...item, status: '', nome: '', email: '', telefone: '', codigoVenda: '', timestamp: '' };
-    resetPromises.push(fetch(WEB_APP_URL, {
+    fetch('https://script.google.com/macros/s/AKfycbzmIhPOWfRr9lWw-3X9tLZ8CBN6n2_0Ud_-E72hsI2bvqzCcF9bJK_a7iRI-NsvJyXm/exec', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(vazio)
-    }));
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    })
+    .then(res => res.json())
+    .then(res => {
+      if(res.result === 'success'){
+        mensagem.textContent = 'Reserva realizada com sucesso! Código: ' + dados.codigoVenda;
+        form.reset();
+      } else {
+        mensagem.textContent = 'Erro na reserva: ' + (res.message || 'tente novamente');
+      }
+    })
+    .catch(() => {
+      mensagem.textContent = 'Erro de comunicação com o servidor.';
+    });
   });
-  Promise.all(resetPromises).then(() => {
-    mensagemOrganizador.textContent = 'Rifa resetada com sucesso.';
-    resultadoSorteio.textContent = '';
-    carregarDados();
-  });
-};
-
-carregarDados();
-
 </script>
 
 </body>
