@@ -46,27 +46,20 @@
   }
   table {
     width: 100%;
-    table-layout: fixed; /* largura fixa das colunas */
+    table-layout: fixed;
     border-collapse: collapse;
     margin-top: 15px;
   }
   th, td {
-    width: 14.2857%; /* 7 colunas iguais */
+    width: 14.2857%;
     padding: 8px;
     text-align: center;
     border: 1px solid #ddd;
     word-wrap: break-word;
   }
-  th {
-    background-color: #007bff;
-    color: white;
-  }
-  .reserved {
-    background-color: #fff3cd;
-  }
-  .paid {
-    background-color: #d4edda;
-  }
+  th { background-color: #007bff; color: white; }
+  .reserved { background-color: #fff3cd; }
+  .paid { background-color: #d4edda; }
   #msg, #msgAdmin, #msgSortear, #msgInfoRifa {
     font-weight: bold;
     margin-top: 10px;
@@ -155,6 +148,7 @@
           <th>TELEFONE</th>
           <th>CÓDIGO VENDA</th>
           <th>TIMESTAMP</th>
+          <th>AÇÕES</th>
         </tr>
       </thead>
       <tbody id="tabelaReservasBody"></tbody>
@@ -163,7 +157,7 @@
 </section>
 
 <script>
-const urlBase = 'https://script.google.com/macros/s/AKfycbxhEu3CekwQm01gKlmbd7d92P0vvHUp9L3-xvhFTqKfnzXZ1ZXQOI_AymBku1W-SNAC/exec';
+const urlBase = 'https://script.google.com/macros/s/AKfycbyfk9yZSKKM_c26pOvnbYrEIy-AfwILrjrGTtgN57wkzAFVCH5LcVJFAP65qSu7yjLB/exec';
 
 const formReserva = document.getElementById('formReserva');
 const msg = document.getElementById('msg');
@@ -188,13 +182,13 @@ formReserva.addEventListener('submit', async e => {
   e.preventDefault();
   msg.textContent = '';
   const data = {
-    numero: document.getElementById('numero').value.toString().padStart(2,'0'),
-    nome: document.getElementById('nome').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    telefone: document.getElementById('telefone').value.trim(),
-    status: 'reservado',
-    codigoVenda: 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
-    timestamp: Date.now()
+    NUMERO: document.getElementById('numero').value.toString().padStart(2,'0'),
+    NOME: document.getElementById('nome').value.trim(),
+    EMAIL: document.getElementById('email').value.trim(),
+    TELEFONE: document.getElementById('telefone').value.trim(),
+    STATUS: 'reservado',
+    'CODIGO VENDA': 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
+    TIMESTAMP: Date.now()
   };
   try {
     const res = await fetch(urlBase, {
@@ -244,7 +238,7 @@ async function carregarPainel(){
   }
 }
 
-function montarTabela(dados){
+function montarTabela(dados) {
   tabelaReservasBody.innerHTML = '';
   dados.forEach(item => {
     const tr = document.createElement('tr');
@@ -256,7 +250,7 @@ function montarTabela(dados){
       <td>${item.EMAIL || ''}</td>
       <td>${item.TELEFONE || ''}</td>
       <td>${item['CODIGO VENDA'] || ''}</td>
-      <td>${new Date(item.TIMESTAMP).toLocaleString() || ''}</td>
+      <td>${item.TIMESTAMP ? new Date(item.TIMESTAMP).toLocaleString() : ''}</td>
       <td>
         ${item.STATUS !== 'pago' ? `<button onclick="marcarPagamento('${item.NUMERO}')">Marcar Pago</button>` : 'Pago'}
       </td>
@@ -269,7 +263,7 @@ async function marcarPagamento(numero){
   try {
     const res = await fetch(urlBase, {
       method: 'POST',
-      body: JSON.stringify({numero, status:'pago'})
+      body: JSON.stringify({NUMERO: numero, STATUS:'pago'})
     });
     const json = await res.json();
     if(json.result === 'success'){
