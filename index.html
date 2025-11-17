@@ -1,371 +1,410 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<title>Rifa Online</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FTC Prêmios - Rifa Online</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 10px;
-    background: #f4f4f4;
-  }
-  header, section {
-    background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 8px #ddd;
-  }
-  h1, h2 {
-    color: #333;
-  }
-  label {
-    display: block;
-    margin-top: 10px;
-  }
-  input, button {
-    padding: 10px;
-    font-size: 16px;
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-  }
-  button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 15px;
-  }
-  button:hover {
-    background-color: #0056b3;
-  }
-  table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    margin-top: 15px;
-  }
-  th, td {
-    width: 14.2857%;
-    padding: 8px;
-    text-align: center;
-    border: 1px solid #ddd;
-    word-wrap: break-word;
-  }
-  th { background-color: #007bff; color: white; }
-  .reserved { background-color: #fff3cd; }
-  .paid { background-color: #d4edda; }
-  #msg, #msgAdmin, #msgSortear, #msgInfoRifa {
-    font-weight: bold;
-    margin-top: 10px;
-  }
-  .winner {
-    font-weight: bold;
-    font-size: 1.2em;
-    color: #0b3d91;
-    margin-top: 1em;
-    padding: 10px;
-    border: 2px solid #4285f4;
+  body{font-family:Arial,sans-serif;background:#f2f6ff;color:#003366;margin:0;padding:18px;}
+  header{background:#fff;padding:10px;border-radius:10px;text-align:center;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+  .grade{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;max-width:980px;margin:8px auto}
+  .numero{background:#fff;border-radius:8px;padding:10px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;transition:transform .12s}
+  .numero:hover{transform:translateY(-3px)}
+  .disponivel{background:#eaf4ff;border-color:#4a8fe8}
+  .reservado{background:#fff7e6;border-color:#ffb74d;cursor:default}
+  .pago{background:#e8f7ff;border-color:#03a9f4;cursor:default}
+  #formulario{max-width:420px;margin:12px auto;padding:12px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);display:none}
+  input,button,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0;box-sizing:border-box;font-size:14px}
+  button{background:#0b63d6;color:#fff;border:none;cursor:pointer}
+  .small-btn{display:inline-block;padding:6px 10px;font-size:13px}
+  #dadosSorteioBox{max-width:720px;margin:12px auto;padding:12px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);text-align:left}
+  #grupoWa{display:flex;flex-direction:column;gap:6px;background:#e6ffea;padding:10px;border-radius:8px;border:1px solid #9be59f}
+  .highlight{font-weight:bold;color:#006600;background:#e0ffda;padding:8px;border-radius:6px;text-align:center}
+  #adminArea{max-width:920px;margin:12px auto}
+  #senhaContainer{background:#fff;padding:12px;border-radius:8px;border:1px solid #ddd}
+  #adminPanel{display:none;background:#fff;padding:12px;border-radius:8px;margin-top:10px;border:1px solid #ddd}
+  .row{display:flex;gap:8px}
+  .col{flex:1}
+  @media(max-width:700px){
+    .grade{grid-template-columns:repeat(5,1fr)}
+    .row{flex-direction:column}
   }
 </style>
 </head>
 <body>
+  <header>
+    <img src="https://drive.google.com/uc?export=view&id=1n7U8qDkrcXc34synyHiwOlqV4a5azLVk" alt="FTC Prêmios" style="max-height:72px">
+    <h2 style="margin:6px 0 0 0">Escolha seu número da sorte!</h2>
+  </header>
 
-<header>
-  <h1>Rifa Online</h1>
-</header>
+  <div id="gradeNumeros" class="grade" aria-live="polite"></div>
 
-<section>
-  <form id="formReserva">
-    <h2>Reservar Número</h2>
-    <label for="numero">Número (00 a 99)</label>
-    <input type="number" id="numero" min="0" max="99" required />
-    <label for="nome">Nome</label>
-    <input type="text" id="nome" required />
-    <label for="email">Email</label>
-    <input type="email" id="email" required />
-    <label for="telefone">Telefone</label>
-    <input type="tel" id="telefone" required />
-    <button type="submit">Reservar</button>
-    <div id="msg"></div>
-  </form>
-</section>
+  <div id="formulario" aria-live="polite">
+    <h3>Reservar número <span id="numeroEscolhido"></span></h3>
+    <input id="nome" placeholder="Seu nome completo" autocomplete="name">
+    <input id="email" placeholder="Seu e-mail" type="email" autocomplete="email">
+    <input id="contato" placeholder="Seu WhatsApp (ex: +5511999998888)" autocomplete="tel">
+    <button onclick="enviarReserva()">Confirmar Reserva</button>
+    <p id="mensagem" style="margin-top:8px"></p>
 
-<section>
-  <h2>Pagamento Pix</h2>
-  <p>Chave Pix: 9ce163ce-4d97-425a-9a99-445802f3e871</p>
-  <div id="qrCodePlaceholder" style="width:180px; height:180px; border:2px dashed #ccc; display:flex; justify-content:center; align-items:center; color:#aaa; margin-top: 10px;">
-    Insira aqui a imagem JPEG do QR Code (externa)
+    <div id="aposReserva" style="display:none;margin-top:12px">
+      <div id="grupoWa" >
+        <a id="linkGrupo" href="#" target="_blank" rel="noopener">Entrar no grupo da rifa</a>
+        <div class="highlight">PAGUE POR AQUI A SUA APOSTA E BOA SORTE</div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <p style="margin:6px 0 4px 0"><strong>Mensagem pronta para enviar ao organizador</strong></p>
+        <textarea id="mensagemPronta" rows="5" readonly style="width:100%;"></textarea>
+        <div class="row" style="margin-top:8px">
+          <div class="col"><button onclick="abrirWhatsapp()">Gerar mensagem no WhatsApp</button></div>
+          <div class="col"><button onclick="copiarMensagem()" style="background:#4caf50">Copiar mensagem</button></div>
+        </div>
+      </div>
+    </div>
   </div>
-  <p>Mantenha seu número reservado após o pagamento ser confirmado.</p>
-</section>
 
-<section>
-  <h2>Grupo WhatsApp</h2>
-  <a href="https://chat.whatsapp.com/seulinkdoGrupoExemplo" target="_blank" rel="noopener noreferrer">Entrar no Grupo</a>
-</section>
-
-<hr />
-
-<section>
-  <h2>Área do Organizador</h2>
-  <label for="senhaAdmin">Senha:</label>
-  <input type="password" id="senhaAdmin" placeholder="Senha do organizador" />
-  <button id="btnLogin">Entrar</button>
-  <div id="msgAdmin"></div>
-
-  <div id="panelOrganizador" style="display:none;">
-    <h3>Configurações da Rifa</h3>
-    <label for="premio">Prêmio:</label>
-    <input type="text" id="premio" />
-    <label for="valor">Valor da Rifa:</label>
-    <input type="text" id="valor" />
-    <label for="dataSorteio">Data do Sorteio:</label>
-    <input type="date" id="dataSorteio" />
-    <button id="btnSalvarInfo">Salvar</button>
-    <div id="msgInfoRifa"></div>
-
-    <h3>Último Ganhador</h3>
-    <div class="winner" id="divGanhador" style="display:none;"></div>
-
-    <button id="btnSortear">Sortear Vencedor</button>
-    <button id="btnResetar">Resetar Reservas Expiradas</button>
-    <div id="msgSortear"></div>
-
-    <h3>Reservas</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>NUMERO</th>
-          <th>STATUS</th>
-          <th>NOME</th>
-          <th>EMAIL</th>
-          <th>TELEFONE</th>
-          <th>CÓDIGO VENDA</th>
-          <th>TIMESTAMP</th>
-          <th>AÇÕES</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaReservasBody"></tbody>
-    </table>
+  <div id="dadosSorteioBox" aria-live="polite">
+    <h3>📢 Informações do Sorteio (público)</h3>
+    <p><strong>N° Sorteio:</strong> <span id="infoNumero">--</span></p>
+    <p><strong>Data/Hora:</strong> <span id="infoDataHora">--</span></p>
+    <p><strong>Valor:</strong> <span id="infoValor">--</span></p>
+    <p><strong>Prêmio:</strong> <span id="infoPremio">--</span></p>
   </div>
-</section>
+
+  <div id="adminArea">
+    <div id="senhaContainer">
+      <h3>Painel Administrativo</h3>
+      <input id="senhaAdmin" placeholder="Digite a senha do painel (ex: 8378)">
+      <div class="row" style="margin-top:8px">
+        <div class="col"><button onclick="entrarAdmin()">Entrar</button></div>
+        <div class="col"><button onclick="carregarDadosPublicos()">Atualizar agora</button></div>
+      </div>
+      <p id="msgSenha" style="color:red;margin-top:8px"></p>
+    </div>
+
+    <div id="adminPanel">
+      <h3>Área Admin</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label>N° Sorteio:
+            <input id="adminInputNumero" placeholder="Número do sorteio">
+          </label>
+        </div>
+        <div>
+          <label>Data/Hora:
+            <input id="adminInputDataHora" type="datetime-local" placeholder="">
+          </label>
+        </div>
+        <div>
+          <label>Valor:
+            <input id="adminInputValor" placeholder="Ex: R$ 5,00">
+          </label>
+        </div>
+        <div>
+          <label>Prêmio:
+            <input id="adminInputPremio" placeholder="Ex: TV 43''">
+          </label>
+        </div>
+      </div>
+
+      <div style="margin-top:10px" class="row">
+        <div class="col"><button onclick="salvarDadosSorteio()">Salvar Dados do Sorteio</button></div>
+        <div class="col"><button onclick="resetarReservasNaoPagas()" style="background:#ff9800">Resetar reservas NÃO pagas</button></div>
+      </div>
+
+      <div style="margin-top:8px" class="row">
+        <div class="col"><button onclick="executarSorteio()" style="background:#d32f2f">Executar Sorteio (senha)</button></div>
+        <div class="col"><button onclick="resetarRifaCompleta()" style="background:#9e9e9e">Resetar rifa completa</button></div>
+      </div>
+
+      <p id="msgSalvarDados" style="color:green;margin-top:8px"></p>
+      <p id="msgSorteio" style="color:green;margin-top:6px"></p>
+    </div>
+  </div>
 
 <script>
-const urlBase = 'https://script.google.com/macros/s/AKfycbyfk9yZSKKM_c26pOvnbYrEIy-AfwILrjrGTtgN57wkzAFVCH5LcVJFAP65qSu7yjLB/exec';
+  // ---------------------------
+  // Inicialização
+  // ---------------------------
+  let numeroSelecionadoRaw = null; // valor cru enviado ao servidor (ex: 1)
+  let numeroSelecionadoDisplay = ""; // string formatada p/ UI (ex: "01")
+  let ultimaReserva = null; // guardará dados da reserva retornada pelo servidor
 
-const formReserva = document.getElementById('formReserva');
-const msg = document.getElementById('msg');
-const senhaAdmin = document.getElementById('senhaAdmin');
-const btnLogin = document.getElementById('btnLogin');
-const msgAdmin = document.getElementById('msgAdmin');
-const panelOrganizador = document.getElementById('panelOrganizador');
-const premioInput = document.getElementById('premio');
-const valorInput = document.getElementById('valor');
-const dataSorteioInput = document.getElementById('dataSorteio');
-const btnSalvarInfo = document.getElementById('btnSalvarInfo');
-const msgInfoRifa = document.getElementById('msgInfoRifa');
-const divGanhador = document.getElementById('divGanhador');
-const tabelaReservasBody = document.getElementById('tabelaReservasBody');
-const btnSortear = document.getElementById('btnSortear');
-const btnResetar = document.getElementById('btnResetar');
-const msgSortear = document.getElementById('msgSortear');
-
-let adminSenha = '';
-
-formReserva.addEventListener('submit', async e => {
-  e.preventDefault();
-  msg.textContent = '';
-  const data = {
-    NUMERO: document.getElementById('numero').value.toString().padStart(2,'0'),
-    NOME: document.getElementById('nome').value.trim(),
-    EMAIL: document.getElementById('email').value.trim(),
-    TELEFONE: document.getElementById('telefone').value.trim(),
-    STATUS: 'reservado',
-    'CODIGO VENDA': 'RIF' + Math.floor(Math.random() * 999999).toString().padStart(6,'0'),
-    TIMESTAMP: Date.now()
-  };
-  try {
-    const res = await fetch(urlBase, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    const json = await res.json();
-    if(json.result === 'success'){
-      msg.textContent = 'Reserva feita com sucesso!';
-      formReserva.reset();
-      carregarPainel();
-    } else {
-      msg.textContent = 'Erro na reserva: ' + json.message;
-    }
-  } catch {
-    msg.textContent = 'Erro na comunicação com o servidor.';
+  function inicializar() {
+    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
+    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
   }
-});
+  inicializar();
 
-btnLogin.addEventListener('click', async () => {
-  if(!senhaAdmin.value.trim()){
-    msgAdmin.textContent = 'Informe a senha!';
-    return;
+  // Atualiza periodicamente
+  setInterval(()=> {
+    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
+    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
+  }, 3000);
+
+  // ---------------------------
+  // Util: normalizar status (remove acentos e case-insensitive)
+  // ---------------------------
+  function normalizeText(str) {
+    if (!str && str !== 0) return '';
+    return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   }
-  adminSenha = senhaAdmin.value.trim();
-  await carregarPainel();
-});
 
-async function carregarPainel(){
-  msgAdmin.textContent = '';
-  msgSortear.textContent = '';
-  msgInfoRifa.textContent = '';
-  try {
-    const res = await fetch(`${urlBase}?action=getPanelData&admin=${encodeURIComponent(adminSenha)}`);
-    const dados = await res.json();
-    if(!Array.isArray(dados.data)) {
-      msgAdmin.textContent = dados.message || 'Senha incorreta ou erro.';
-      panelOrganizador.style.display = 'none';
+  // ---------------------------
+  // Mostrar grade de números
+  // ---------------------------
+  function mostrarNumeros(dados) {
+    const c = document.getElementById('gradeNumeros');
+    c.innerHTML = '';
+    if (!dados || !dados.length) {
+      c.innerHTML = '<p>Sem números na planilha.</p>';
       return;
     }
-    montarTabela(dados.data);
-    await carregarInfoRifa();
-    panelOrganizador.style.display = 'block';
-    msgAdmin.textContent = 'Área do organizador ativa.';
-  } catch {
-    msgAdmin.textContent = 'Erro ao carregar painel.';
-  }
-}
+    dados.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'numero';
+      const rawNum = item.numero;
+      const displayNum = String(rawNum).padStart(2,'0');
+      const statusRaw = item.status || 'Disponível';
+      const statusNorm = normalizeText(statusRaw);
 
-function montarTabela(dados) {
-  tabelaReservasBody.innerHTML = '';
-  dados.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.className = item.STATUS === 'pago' ? 'paid' : (item.STATUS === 'reservado' ? 'reserved' : '');
-    tr.innerHTML = `
-      <td>${item.NUMERO || ''}</td>
-      <td>${item.STATUS || ''}</td>
-      <td>${item.NOME || ''}</td>
-      <td>${item.EMAIL || ''}</td>
-      <td>${item.TELEFONE || ''}</td>
-      <td>${item['CODIGO VENDA'] || ''}</td>
-      <td>${item.TIMESTAMP ? new Date(item.TIMESTAMP).toLocaleString() : ''}</td>
-      <td>
-        ${item.STATUS !== 'pago' ? `<button onclick="marcarPagamento('${item.NUMERO}')">Marcar Pago</button>` : 'Pago'}
-      </td>
-    `;
-    tabelaReservasBody.appendChild(tr);
-  });
-}
+      if (statusNorm.indexOf('disp') !== -1 || statusNorm === '') div.classList.add('disponivel');
+      else if (statusNorm.indexOf('reserv') !== -1) div.classList.add('reservado');
+      else if (statusNorm.indexOf('pag') !== -1) div.classList.add('pago');
 
-async function marcarPagamento(numero){
-  try {
-    const res = await fetch(urlBase, {
-      method: 'POST',
-      body: JSON.stringify({NUMERO: numero, STATUS:'pago'})
-    });
-    const json = await res.json();
-    if(json.result === 'success'){
-      msgSortear.textContent = 'Pagamento marcado com sucesso.';
-      carregarPainel();
-    } else {
-      msgSortear.textContent = 'Erro ao marcar pagamento: ' + json.message;
-    }
-  } catch {
-    msgSortear.textContent = 'Erro na comunicação.';
-  }
-}
+      div.innerHTML = `<div style="font-size:18px"><strong>${displayNum}</strong></div><div style="font-size:12px;margin-top:6px">${statusRaw}</div>`;
 
-btnResetar.addEventListener('click', async () => {
-  try {
-    const res = await fetch(`${urlBase}?action=resetReservations&admin=${encodeURIComponent(adminSenha)}`);
-    const json = await res.json();
-    if(json.result === 'success'){
-      msgSortear.textContent = 'Reservas expiradas resetadas.';
-      carregarPainel();
-    } else {
-      msgSortear.textContent = 'Erro ao resetar reservas.';
-    }
-  } catch {
-    msgSortear.textContent = 'Erro na comunicação.';
-  }
-});
+      // armazenar atributo com o número cru (útil para ações)
+      div.dataset.numRaw = rawNum;
 
-btnSortear.addEventListener('click', () => {
-  msgSortear.textContent = 'Sorteando... Aguarde 30 segundos.';
-  let count = 30;
-  const interval = setInterval(() => {
-    count--;
-    msgSortear.textContent = `Sorteando... ${count} segundos restantes.`;
-    if(count <= 0){
-      clearInterval(interval);
-      realizarSorteio();
-    }
-  }, 1000);
-});
-
-async function realizarSorteio(){
-  try {
-    const res = await fetch(`${urlBase}?action=drawWinner&admin=${encodeURIComponent(adminSenha)}`);
-    const json = await res.json();
-    if(json.result === 'success'){
-      divGanhador.style.display = 'block';
-      divGanhador.textContent = `Último vencedor: N°${json.data.NUMERO} - ${json.data.NOME}`;
-      msgSortear.textContent = '';
-    } else {
-      msgSortear.textContent = 'Erro no sorteio: ' + json.message;
-    }
-  } catch {
-    msgSortear.textContent = 'Erro ao comunicar com o servidor.';
-  }
-}
-
-async function carregarInfoRifa(){
-  try {
-    const res = await fetch(`${urlBase}?action=getRifaInfo&admin=${encodeURIComponent(adminSenha)}`);
-    const json = await res.json();
-    if(json.result === 'success'){
-      premioInput.value = json.data.premio || '';
-      valorInput.value = json.data.valor || '';
-      dataSorteioInput.value = json.data.dataSorteio || '';
-      if(json.data.ganhador){
-        divGanhador.style.display = 'block';
-        divGanhador.textContent = `Último vencedor: N°${json.data.ganhador.NUMERO} - ${json.data.ganhador.NOME}`;
-      } else {
-        divGanhador.style.display = 'none';
+      // comportamento ao clicar de acordo com status (Disponível / Reservado / Pago)
+      if (statusNorm.indexOf('disp') !== -1 || statusNorm === '') {
+        div.onclick = () => selecionarNumero(rawNum);
+      } else if (statusNorm.indexOf('reserv') !== -1) {
+        div.onclick = () => {
+          // Prompt rápido para senha (Opção A)
+          const s = prompt('Senha para liberar o número (4 dígitos):');
+          if (s === null) return;
+          google.script.run.withSuccessHandler(res=>{
+            alert(res.mensagem || (res.sucesso ? 'Número liberado' : 'Erro'));
+            carregarDadosPublicos();
+          }).resetNumeroIndividual(rawNum, s);
+        };
+      } else if (statusNorm.indexOf('pag') !== -1) {
+        div.onclick = () => {
+          alert('Esse número já está pago.');
+        };
       }
-    }
-  } catch(e) {
-    console.error('Erro ao carregar info da rifa', e);
-  }
-}
 
-btnSalvarInfo.addEventListener('click', async () => {
-  msgInfoRifa.textContent = '';
-  const info = {
-    action: 'salvarInfoRifa',
-    premio: premioInput.value.trim(),
-    valor: valorInput.value.trim(),
-    dataSorteio: dataSorteioInput.value,
-    admin: adminSenha
-  };
-  try {
-    const res = await fetch(urlBase, {
-      method: 'POST',
-      body: JSON.stringify(info)
+      c.appendChild(div);
     });
-    const json = await res.json();
-    if(json.result === 'success'){
-      msgInfoRifa.textContent = 'Informações salvas com sucesso.';
-    } else {
-      msgInfoRifa.textContent = 'Erro ao salvar informações.';
-    }
-  } catch {
-    msgInfoRifa.textContent = 'Erro na comunicação com o servidor.';
   }
-});
-</script>
 
+  // ---------------------------
+  // Selecionar e reservar
+  // ---------------------------
+  function selecionarNumero(num) {
+    // num é o valor cru vindo do sheet (ex: 1)
+    numeroSelecionadoRaw = num;
+    numeroSelecionadoDisplay = String(num).padStart(2,'0');
+    document.getElementById('numeroEscolhido').innerText = numeroSelecionadoDisplay;
+    document.getElementById('formulario').style.display = 'block';
+    document.getElementById('mensagem').innerText = '';
+    document.getElementById('aposReserva').style.display = 'none';
+    setTimeout(()=>{ window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' }); }, 200);
+  }
+
+  function enviarReserva(){
+    const nome = document.getElementById('nome').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const contato = document.getElementById('contato').value.trim();
+    if (!nome || !email || !contato) {
+      document.getElementById('mensagem').style.color = 'red';
+      document.getElementById('mensagem').innerText = 'Preencha todos os campos!';
+      return;
+    }
+    if (numeroSelecionadoRaw === null) {
+      document.getElementById('mensagem').style.color = 'red';
+      document.getElementById('mensagem').innerText = 'Selecione um número antes de reservar.';
+      return;
+    }
+
+    document.getElementById('mensagem').style.color = 'black';
+    document.getElementById('mensagem').innerText = 'Enviando reserva...';
+
+    // ENVIAR O VALOR CRU (não o com zero à esquerda) para o servidor
+    google.script.run.withSuccessHandler(res => {
+      if (!res) {
+        document.getElementById('mensagem').style.color = 'red';
+        document.getElementById('mensagem').innerText = 'Erro inesperado.';
+        return;
+      }
+      document.getElementById('mensagem').style.color = res.success ? 'green' : 'red';
+      document.getElementById('mensagem').innerText = res.message || '';
+      if (res.success) {
+        ultimaReserva = res.reserva || null;
+        // Preenche área pós-reserva com link do grupo e mensagem pronta
+        document.getElementById('linkGrupo').href = res.grupoWhatsapp || 'https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg';
+        document.getElementById('mensagemPronta').value = criarMensagemPronta(res.reserva);
+        document.getElementById('aposReserva').style.display = 'block';
+      } else {
+        document.getElementById('aposReserva').style.display = 'none';
+      }
+      // atualizar grade
+      google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
+      google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
+    }).reservarNumero(numeroSelecionadoRaw, nome, email, contato);
+  }
+
+  function criarMensagemPronta(reserva) {
+    if (!reserva) return '';
+    return `Olá! Acabei de reservar um número na rifa.\n\nNúmero: ${reserva.numero}\nCódigo: ${reserva.codigo}\nNome: ${reserva.nome}\nE-mail: ${reserva.email}\nWhatsApp: ${reserva.contato}\n\nFavor confirmar instruções de pagamento.`;
+  }
+
+  // Abre WhatsApp com mensagem pronta (API sem número, usuário escolhe destinatário)
+  function abrirWhatsapp() {
+    const texto = encodeURIComponent(document.getElementById('mensagemPronta').value || '');
+    const url = 'https://api.whatsapp.com/send?text=' + texto;
+    window.open(url, '_blank');
+  }
+
+  function copiarMensagem() {
+    const txt = document.getElementById('mensagemPronta').value || '';
+    navigator.clipboard.writeText(txt).then(()=> {
+      alert('Mensagem copiada! Cole no WhatsApp para enviar ao organizador.');
+    }).catch(()=> {
+      alert('Não foi possível copiar automaticamente. Selecione e copie manualmente.');
+    });
+  }
+
+  // ---------------------------
+  // Dados do sorteio (público)
+  // ---------------------------
+  function popularDadosSorteio(info) {
+    if (!info) return;
+    document.getElementById('infoNumero').innerText = info.numeroSorteio || '--';
+    // Se for objeto Date, toLocaleString; se for string, exibir como veio
+    try {
+      const l = info.dataHora;
+      if (l instanceof Date) document.getElementById('infoDataHora').innerText = l.toLocaleString();
+      else document.getElementById('infoDataHora').innerText = l || '--';
+    } catch(e){
+      document.getElementById('infoDataHora').innerText = info.dataHora || '--';
+    }
+    document.getElementById('infoValor').innerText = info.valor || '--';
+    document.getElementById('infoPremio').innerText = info.premio || '--';
+    // também preenche inputs admin se estiver visível
+    if (document.getElementById('adminInputNumero')) {
+      document.getElementById('adminInputNumero').value = info.numeroSorteio || '';
+      try {
+        if (info.dataHora) {
+          const d = new Date(info.dataHora);
+          const local = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+          document.getElementById('adminInputDataHora').value = local;
+        }
+      } catch(e){}
+      document.getElementById('adminInputValor').value = info.valor || '';
+      document.getElementById('adminInputPremio').value = info.premio || '';
+    }
+  }
+
+  // ---------------------------
+  // Admin: entrar (client-side show only)
+  // ---------------------------
+  function entrarAdmin() {
+    const s = (document.getElementById('senhaAdmin').value || '').trim();
+    if (!s) {
+      document.getElementById('msgSenha').innerText = 'Digite a senha para acessar.';
+      return;
+    }
+    if (s !== '8378') {
+      document.getElementById('msgSenha').innerText = 'Senha incorreta.';
+      return;
+    }
+    document.getElementById('msgSenha').innerText = '';
+    document.getElementById('senhaContainer').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    carregarDadosPublicos();
+  }
+
+  // ---------------------------
+  // Admin: salvar dados do sorteio
+  // ---------------------------
+  function salvarDadosSorteio() {
+    const numero = document.getElementById('adminInputNumero').value || '';
+    const dataHora = document.getElementById('adminInputDataHora').value || '';
+    const valor = document.getElementById('adminInputValor').value || '';
+    const premio = document.getElementById('adminInputPremio').value || '';
+    document.getElementById('msgSalvarDados').innerText = 'Salvando...';
+    google.script.run.withSuccessHandler(res=>{
+      if (res && res.success) {
+        document.getElementById('msgSalvarDados').innerText = 'Dados salvos com sucesso!';
+        carregarDadosPublicos();
+      } else {
+        document.getElementById('msgSalvarDados').innerText = 'Erro ao salvar.';
+      }
+    }).salvarDadosSorteio(numero, dataHora, valor, premio);
+  }
+
+  // ---------------------------
+  // Admin: executar sorteio (senha server-side)
+  // ---------------------------
+  function executarSorteio() {
+    const s = prompt('Digite a senha do sorteio (4 dígitos):');
+    if (!s) return;
+    document.getElementById('msgSorteio').innerText = 'Executando sorteio...';
+    google.script.run.withSuccessHandler(res=>{
+      if (!res) {
+        document.getElementById('msgSorteio').style.color='red';
+        document.getElementById('msgSorteio').innerText = 'Erro inesperado.';
+        return;
+      }
+      if (res.erro) {
+        document.getElementById('msgSorteio').style.color='red';
+        document.getElementById('msgSorteio').innerText = res.erro;
+      } else if (res.sucesso) {
+        document.getElementById('msgSorteio').style.color='green';
+        document.getElementById('msgSorteio').innerText = 'Sorteado: ' + res.numero;
+        carregarDadosPublicos();
+      } else {
+        document.getElementById('msgSorteio').style.color='red';
+        document.getElementById('msgSorteio').innerText = 'Resultado inesperado.';
+      }
+    }).realizarSorteio(s);
+  }
+
+  // ---------------------------
+  // Admin: resetar reservas não pagas
+  // ---------------------------
+  function resetarReservasNaoPagas() {
+    if (!confirm('Resetar apenas reservas NÃO pagas? (os números marcados como Pago serão mantidos)')) return;
+    google.script.run.withSuccessHandler(res=>{
+      alert(res.message || 'Operação concluída.');
+      carregarDadosPublicos();
+    }).resetarReservasNaoPagas();
+  }
+
+  // ---------------------------
+  // Admin: resetar rifa completa
+  // ---------------------------
+  function resetarRifaCompleta() {
+    if (!confirm('Resetar toda a rifa (isso apagará todas as reservas e pagamentos)!')) return;
+    google.script.run.withSuccessHandler(res=>{
+      alert(res.message || 'Rifa resetada.');
+      carregarDadosPublicos();
+    }).resetarRifaCompleta();
+  }
+
+  // ---------------------------
+  // Util: atualizar dados manualmente
+  // ---------------------------
+  function carregarDadosPublicos() {
+    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
+    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
+  }
+
+</script>
 </body>
 </html>
