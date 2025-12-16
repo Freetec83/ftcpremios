@@ -1,409 +1,740 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>FTC Prêmios - Rifa Online</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FTC Prêmios — AÇÃO PREMIADA C/ SORTEIO PÚBLICO - ONLINE (Black & Gold)</title>
 <style>
-  body{font-family:Arial,sans-serif;background:#f2f6ff;color:#003366;margin:0;padding:18px;}
-  header{background:#fff;padding:10px;border-radius:10px;text-align:center;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-  .grade{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;max-width:980px;margin:8px auto}
-  .numero{background:#fff;border-radius:8px;padding:10px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;border:2px solid transparent;transition:transform .12s}
-  .numero:hover{transform:translateY(-3px)}
-  .disponivel{background:#eaf4ff;border-color:#4a8fe8}
-  .reservado{background:#fff7e6;border-color:#ffb74d;cursor:default}
-  .pago{background:#e8f7ff;border-color:#03a9f4;cursor:default}
-  #formulario{max-width:420px;margin:12px auto;padding:12px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);display:none}
-  input,button,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0;box-sizing:border-box;font-size:14px}
-  button{background:#0b63d6;color:#fff;border:none;cursor:pointer}
-  .small-btn{display:inline-block;padding:6px 10px;font-size:13px}
-  #dadosSorteioBox{max-width:720px;margin:12px auto;padding:12px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.04);text-align:left}
-  #grupoWa{display:flex;flex-direction:column;gap:6px;background:#e6ffea;padding:10px;border-radius:8px;border:1px solid #9be59f}
-  .highlight{font-weight:bold;color:#006600;background:#e0ffda;padding:8px;border-radius:6px;text-align:center}
-  #adminArea{max-width:920px;margin:12px auto}
-  #senhaContainer{background:#fff;padding:12px;border-radius:8px;border:1px solid #ddd}
-  #adminPanel{display:none;background:#fff;padding:12px;border-radius:8px;margin-top:10px;border:1px solid #ddd}
-  .row{display:flex;gap:8px}
-  .col{flex:1}
-  @media(max-width:700px){
-    .grade{grid-template-columns:repeat(5,1fr)}
-    .row{flex-direction:column}
-  }
+/* ===========================
+   THEME + CORE COLORS (FINAL)
+   =========================== */
+:root{
+  --bg:#070708;
+  --panel:#0f0f10;
+  --card:#151617;
+  --text:#eae8e3;
+  --muted:#bfb8aa;
+  --gold-1:#ffce00;   /* vencedor - dourado forte (B) */
+  --gold-2:#d9a800;
+  --gold-glow: 0 14px 40px rgba(255,206,0,0.35);
+  --available:#d1e7d1; /* disponível (neutro esverdeado) */
+  --reserved:#f79c2f;  /* reservado (laranja forte) */
+  --paid:#1f75ff;      /* pago (azul real) */
+  --danger:#c62828;
+  --glass: rgba(255,255,255,0.02);
+  --card-border: rgba(255,255,255,0.03);
+  --transition: 160ms ease;
+}
+
+/* Base */
+html,body{height:100%}
+body{
+  margin:0;font-family:Inter,system-ui,Arial,Helvetica,sans-serif;
+  background:linear-gradient(180deg,var(--bg), #050505);
+  color:var(--text);padding:20px;-webkit-font-smoothing:antialiased;
+}
+
+/* Header */
+header{
+  display:flex;align-items:center;gap:16px;
+  background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  padding:14px;border-radius:12px;border:1px solid var(--card-border);
+  max-width:1200px;margin:0 auto 16px;box-shadow:0 10px 30px rgba(0,0,0,0.6);
+}
+header img{height:62px;border-radius:10px}
+header h1{margin:0;font-size:20px;color:var(--gold-1);letter-spacing:0.4px}
+header p{margin:0;color:var(--muted);font-size:13px}
+
+/* Panel J..Q */
+.panel{max-width:1200px;margin:16px auto;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--card));
+  padding:14px;border-radius:12px;border:1px solid var(--card-border);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+}
+.card .label{font-size:13px;color:var(--muted)}
+.card .value{font-size:18px;font-weight:800;color:var(--text);margin-top:6px}
+.big{grid-column:span 2}
+.highlight{border-left:4px solid var(--gold-2);background:linear-gradient(180deg, rgba(217,168,80,0.03), rgba(217,168,80,0.01))}
+
+/* Sorteio público */
+#sorteioPublico .title{font-size:13px;color:var(--muted);margin-bottom:6px}
+#numeroAnimado{font-size:56px;font-weight:900;color:var(--gold-1);letter-spacing:1px;text-shadow: 0 6px 24px rgba(255,206,0,0.12)}
+
+#sorteioPublico{
+  margin:0 auto;
+  text-align:center;
+  width:100%;
+  max-width:900px;
+}
+
+/* Grade */
+.grade{
+  display:grid;grid-template-columns:repeat(10,1fr);gap:12px;max-width:1200px;margin:18px auto;
+}
+.numero{
+  min-height:72px;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:16px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+  border:1px solid var(--card-border);color:var(--text);transition:transform var(--transition),box-shadow var(--transition),opacity var(--transition);
+  position:relative;overflow:visible;
+}
+.numero:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.6)}
+
+/* States */
+.disponivel{ background: linear-gradient(180deg, var(--available), rgba(255,255,255,0.01)); color:#052b07; cursor:pointer; border-color: rgba(34,139,34,0.12) }
+.reservado{ background: linear-gradient(180deg, rgba(247,156,47,0.06), rgba(247,156,47,0.03)); border-color: rgba(247,156,47,0.12); color: #2b1a00; }
+.pago{ background: linear-gradient(180deg, rgba(31,117,255,0.06), rgba(31,117,255,0.03)); border-color: rgba(31,117,255,0.12); color:#031a4a; }
+.vencedor{
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  border:2px solid rgba(255,206,0,0.95);
+  color:#0a0a0a; box-shadow: var(--gold-glow);
+  transform: translateY(-4px);
+}
+
+/* blocked visual */
+.blocked{ opacity:0.45; pointer-events:none }
+
+/* Paid animation (check pulse) */
+@keyframes paidPop {
+  0% { transform: scale(0.94); opacity:0.0; }
+  40% { transform: scale(1.06); opacity:1; }
+  100% { transform: scale(1); opacity:1; }
+}
+.paid-anim{ animation: paidPop 680ms cubic-bezier(.2,.9,.3,1); box-shadow: 0 8px 30px rgba(31,117,255,0.12); }
+
+/* Winner pulse during raffle (strong) */
+@keyframes winnerPulseFast {
+  0% { transform: translateY(-2px) scale(1); box-shadow: 0 10px 30px rgba(255,206,0,0.18); }
+  50% { transform: translateY(-6px) scale(1.06); box-shadow: 0 28px 60px rgba(255,206,0,0.28); }
+  100% { transform: translateY(-2px) scale(1); box-shadow: 0 10px 30px rgba(255,206,0,0.18); }
+}
+.pulse{ animation: winnerPulseFast 700ms ease-in-out infinite; }
+
+/* small badge when paid */
+.numero .badge {
+  position:absolute; top:8px; right:8px; background:var(--paid); color:#fff; font-size:11px; padding:4px 6px; border-radius:100px;
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+/* Form & buttons */
+#formulario{ max-width:520px;margin:18px auto;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border:1px solid var(--card-border) }
+input,textarea,select,button{ width:100%; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); margin:8px 0; background:transparent; color:var(--text) }
+button.btn{ background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); border:none; color:#070707; font-weight:800; cursor:pointer }
+button.secondary{ background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+.groupBtn{ display:inline-block; padding:10px 14px; border-radius:8px; background:#25D366; color:#fff; text-decoration:none; }
+
+/* Admin */
+#adminPanel{ max-width:1200px; margin:18px auto 60px auto; padding:12px; border-radius:10px }
+.admin-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px }
+
+/* Responsive */
+@media(max-width:960px){
+  .panel{ grid-template-columns:repeat(2,1fr) }
+  .grade{ grid-template-columns:repeat(5,1fr) }
+  .admin-grid{ grid-template-columns:repeat(2,1fr) }
+}
 </style>
 </head>
 <body>
   <header>
-    <img src="https://drive.google.com/uc?export=view&id=1n7U8qDkrcXc34synyHiwOlqV4a5azLVk" alt="FTC Prêmios" style="max-height:72px">
-    <h2 style="margin:6px 0 0 0">Escolha seu número da sorte!</h2>
+    <img src="https://i.imgur.com/dBoHN6K.png" alt="FTC Prêmios">
+    <div>
+      <h1>FTC Prêmios — AÇÃO PREMIADA C/ SORTEIO PÚBLICO - ONLINE</h1>
+      <p style="margin-top:6px;color:var(--muted)">Clique em um número disponível para reservar; bloqueio automático ao atingir a meta.</p>
+    </div>
   </header>
 
-  <div id="gradeNumeros" class="grade" aria-live="polite"></div>
+  <div class="panel" aria-live="polite">
+    <div class="card big highlight">
+      <div class="label">🎉 Número Sorteado (J)</div>
+      <div id="infoJ" class="value">--</div>
+    </div>
+    <div class="card">
+      <div class="label">🏷️ Código do Ganhador (K)</div>
+      <div id="infoK" class="value">--</div>
+    </div>
+    <div class="card">
+      <div class="label">🔢 Nº Sorteio (L)</div>
+      <div id="infoL" class="value">--</div>
+    </div>
+    <div class="card">
+      <div class="label">💰 Valor por Nº (M)</div>
+      <div id="infoM" class="value">--</div>
+    </div>
 
-  <div id="formulario" aria-live="polite">
-    <h3>Reservar número <span id="numeroEscolhido"></span></h3>
+    <div class="card"><div class="label">⏱️ Data/Hora (N)</div><div id="infoN" class="value">--</div></div>
+    <div class="card"><div class="label">🎁 Prêmio (O)</div><div id="infoO" class="value">--</div></div>
+    <div class="card"><div class="label">📈 Meta de Vendas (P)</div><div id="infoP" class="value">--</div></div>
+    <div class="card"><div class="label">🧾 Total Nº Vendidos (Q)</div><div id="infoQ" class="value">--</div></div>
+  </div>
+
+  <div id="sorteioPublico">
+    <div id="numeroAnimado">00</div>
+  </div>
+
+   <div id="formulario" style="display:none" aria-live="polite">
+    <h3 style="margin:0 0 8px 0">Reservar número <span id="numeroEscolhido" style="color:var(--gold-1)"></span></h3>
     <input id="nome" placeholder="Seu nome completo" autocomplete="name">
     <input id="email" placeholder="Seu e-mail" type="email" autocomplete="email">
     <input id="contato" placeholder="Seu WhatsApp (ex: +5511999998888)" autocomplete="tel">
-    <button onclick="enviarReserva()">Confirmar Reserva</button>
-    <p id="mensagem" style="margin-top:8px"></p>
+    <div style="display:flex;gap:10px">
+      <button id="btnEnviarReserva" class="btn" style="flex:1">Confirmar Reserva</button>
+      <button id="btnCancelarReserva" type="button" class="secondary" style="width:140px">Cancelar</button>
+    </div>
+    <p id="mensagem" class="muted"></p>
 
-    <div id="aposReserva" style="display:none;margin-top:12px">
-      <div id="grupoWa" >
-        <a id="linkGrupo" href="#" target="_blank" rel="noopener">Entrar no grupo da rifa</a>
-        <div class="highlight">PAGUE POR AQUI A SUA APOSTA E BOA SORTE</div>
+    <div id="aposReservaCard" style="display:none;margin-top:12px;padding:12px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02))">
+      <p style="margin:0 0 8px 0;font-weight:700;color:var(--gold-1)">Envie seu comprovante de pagamento no grupo</p>
+      <p style="margin:2px 0;color:var(--text)"><strong>Chave PIX:</strong> <span id="pixKeyText">9ce163ce-4d97-425a-9a99-445802f3e871</span></p>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button id="copyPixBtn" class="btn" style="background:var(--gold-1);color:#070707;padding:8px">Copiar PIX</button>
+        <button id="instrBtn" class="secondary" style="width:160px">Instruções</button>
       </div>
-
-      <div style="margin-top:10px;">
-        <p style="margin:6px 0 4px 0"><strong>Mensagem pronta para enviar ao organizador</strong></p>
-        <textarea id="mensagemPronta" rows="5" readonly style="width:100%;"></textarea>
-        <div class="row" style="margin-top:8px">
-          <div class="col"><button onclick="abrirWhatsapp()">Gerar mensagem no WhatsApp</button></div>
-          <div class="col"><button onclick="copiarMensagem()" style="background:#4caf50">Copiar mensagem</button></div>
-        </div>
-      </div>
+      <a id="grupoLink" href="https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg" target="_blank" rel="noopener" class="groupBtn">Entrar no grupo</a>
     </div>
   </div>
 
-  <div id="dadosSorteioBox" aria-live="polite">
-    <h3>📢 Informações do Sorteio (público)</h3>
-    <p><strong>N° Sorteio:</strong> <span id="infoNumero">--</span></p>
-    <p><strong>Data/Hora:</strong> <span id="infoDataHora">--</span></p>
-    <p><strong>Valor:</strong> <span id="infoValor">--</span></p>
-    <p><strong>Prêmio:</strong> <span id="infoPremio">--</span></p>
-  </div>
+<div id="areaRifa">
 
-  <div id="adminArea">
-    <div id="senhaContainer">
-      <h3>Painel Administrativo</h3>
-      <input id="senhaAdmin" placeholder="Digite a senha do painel (ex: 8378)">
-      <div class="row" style="margin-top:8px">
-        <div class="col"><button onclick="entrarAdmin()">Entrar</button></div>
-        <div class="col"><button onclick="carregarDadosPublicos()">Atualizar agora</button></div>
-      </div>
-      <p id="msgSenha" style="color:red;margin-top:8px"></p>
+  <div id="gradeNumeros" class="grade" role="list" aria-live="polite"></div>
+
+  <div id="adminPanel">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+      <input id="senhaAdmin" placeholder="Senha admin" style="flex:1;padding:10px;border-radius:8px">
+      <button id="btnEntrarAdmin" class="btn" style="width:160px">Entrar Admin</button>
+      <button id="btnAtualizarPublico" class="secondary" style="width:160px">Atualizar agora</button>
     </div>
 
-    <div id="adminPanel">
-      <h3>Área Admin</h3>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>
-          <label>N° Sorteio:
-            <input id="adminInputNumero" placeholder="Número do sorteio">
-          </label>
-        </div>
-        <div>
-          <label>Data/Hora:
-            <input id="adminInputDataHora" type="datetime-local" placeholder="">
-          </label>
-        </div>
-        <div>
-          <label>Valor:
-            <input id="adminInputValor" placeholder="Ex: R$ 5,00">
-          </label>
-        </div>
-        <div>
-          <label>Prêmio:
-            <input id="adminInputPremio" placeholder="Ex: TV 43''">
-          </label>
-        </div>
+    <div id="adminArea" style="display:none">
+      <h3 class="muted">Painel Administrativo (J → Q)</h3>
+      <div id="adminForm" class="admin-grid" style="margin-bottom:12px">
+        <div><label class="muted">J - Número Sorteado</label><input id="adminJ" placeholder="00"></div>
+        <div><label class="muted">K - Código do Ganhador</label><input id="adminK" placeholder="ABC"></div>
+        <div><label class="muted">L - Nº Sorteio</label><input id="adminL" placeholder="Ex: 01"></div>
+        <div><label class="muted">M - Valor por Nº</label><input id="adminM" placeholder="Ex: R$ 5,00"></div>
+        <div><label class="muted">N - Data/Hora</label><input id="adminN" type="datetime-local"></div>
+        <div><label class="muted">O - Prêmio</label><input id="adminO" placeholder="Ex: TV 43''"></div>
+        <div><label class="muted">P - Meta de Vendas</label><input id="adminP" placeholder="Ex: 100"></div>
+        <div><label class="muted">Q - Total Nº Vendidos</label><input id="adminQ" placeholder="Ex: 24"></div>
       </div>
 
-      <div style="margin-top:10px" class="row">
-        <div class="col"><button onclick="salvarDadosSorteio()">Salvar Dados do Sorteio</button></div>
-        <div class="col"><button onclick="resetarReservasNaoPagas()" style="background:#ff9800">Resetar reservas NÃO pagas</button></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button id="btnSalvarJQ" class="btn">Salvar J→Q</button>
+        <button id="btnResetReservas" class="secondary">Resetar reservas NÃO pagas</button>
+        <button id="btnResetRifa" class="secondary">Resetar rifa completa</button>
       </div>
 
-      <div style="margin-top:8px" class="row">
-        <div class="col"><button onclick="executarSorteio()" style="background:#d32f2f">Executar Sorteio (senha)</button></div>
-        <div class="col"><button onclick="resetarRifaCompleta()" style="background:#9e9e9e">Resetar rifa completa</button></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <div style="flex:1"><label class="muted">Confirmar Pagamento (Número)</label><input id="confirmar-numero" placeholder="Ex: 24"></div>
+        <div style="width:160px"><label class="muted">Senha</label><input id="confirmar-senha" placeholder="Senha admin"></div>
+        <div style="width:160px;align-self:flex-end"><button id="btnConfirmarPagamento" class="btn">Confirmar Pagamento</button></div>
       </div>
 
-      <p id="msgSalvarDados" style="color:green;margin-top:8px"></p>
-      <p id="msgSorteio" style="color:green;margin-top:6px"></p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button id="btnIniciarSorteio" class="btn" style="background:var(--danger)">Executar sorteio (público)</button>
+        <button id="btnRegistrarResultado" class="secondary">Registrar Resultado Manual</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input id="liberar-minutos" placeholder="Minutos (p.ex. 10)" style="width:160px;padding:8px;border-radius:6px">
+        <input id="liberar-senha" placeholder="Senha admin" style="flex:1;padding:8px;border-radius:6px">
+        <button id="btnLiberarReservas" class="btn" style="width:180px">Liberar reservas por N min</button>
+        <button id="btnDesbloquear" class="secondary" style="width:140px">Remover override</button>
+      </div>
+
+      <div id="adminMsgs" class="muted" style="margin-top:8px"></div>
     </div>
   </div>
 
 <script>
-  // ---------------------------
-  // Inicialização
-  // ---------------------------
-  let numeroSelecionadoRaw = null; // valor cru enviado ao servidor (ex: 1)
-  let numeroSelecionadoDisplay = ""; // string formatada p/ UI (ex: "01")
-  let ultimaReserva = null; // guardará dados da reserva retornada pelo servidor
+(function(){
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function el(id){ return document.getElementById(id); }
 
-  function inicializar() {
-    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
-    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
+  // elements
+  const gradeEl = el('gradeNumeros');
+  const formEl = el('formulario');
+  const numeroEscolhidoEl = el('numeroEscolhido');
+  const mensagemEl = el('mensagem');
+  const btnEnviar = el('btnEnviarReserva');
+  const btnCancelar = el('btnCancelarReserva');
+  const aposReservaCard = el('aposReservaCard');
+  const pixKeyText = el('pixKeyText');
+  const copyPixBtn = el('copyPixBtn');
+  const grupoLink = el('grupoLink');
+  const instrBtn = el('instrBtn');
+
+  const btnEntrarAdmin = el('btnEntrarAdmin');
+  const senhaAdmin = el('senhaAdmin');
+  const adminArea = el('adminArea');
+  const btnAtualizarPublico = el('btnAtualizarPublico');
+  const adminFields = { J: el('adminJ'), K: el('adminK'), L: el('adminL'), M: el('adminM'), N: el('adminN'), O: el('adminO'), P: el('adminP'), Q: el('adminQ') };
+  const btnSalvarJQ = el('btnSalvarJQ');
+  const btnResetReservas = el('btnResetReservas');
+  const btnResetRifa = el('btnResetRifa');
+  const btnConfirmarPagamento = el('btnConfirmarPagamento');
+  const confirmarNumero = el('confirmar-numero');
+  const confirmarSenha = el('confirmar-senha');
+  const btnIniciarSorteio = el('btnIniciarSorteio');
+  const btnRegistrarResultado = el('btnRegistrarResultado');
+  const adminMsgs = el('adminMsgs');
+
+  const btnLiberarReservas = el('btnLiberarReservas');
+  const btnDesbloquear = el('btnDesbloquear');
+  const liberarMinutos = el('liberar-minutos');
+  const liberarSenha = el('liberar-senha');
+
+  const sorteioPublico = el('sorteioPublico');
+  const numeroAnimado = el('numeroAnimado');
+
+  const PIX_DEFAULT = '9ce163ce-4d97-425a-9a99-445802f3e871';
+  const GRUPO_LINK = 'https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg';
+  const STORAGE_KEY = 'ftc_premios_contact';
+  let blockedByMeta = false;
+  let numeroSelecionado = null;
+  let rafflePulseTimer = null;
+
+  grupoLink.href = GRUPO_LINK;
+  pixKeyText.textContent = PIX_DEFAULT;
+
+    // ================================================
+  // 🟡 FUNÇÃO PARA EXIBIR SORTEIO PARA TODOS
+  // ================================================
+  function mostrarSorteioPublico() {
+    sorteioPublico.style.display = 'block';
+    sorteioPublico.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  inicializar();
 
-  // Atualiza periodicamente
-  setInterval(()=> {
-    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
-    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
-  }, 3000);
-
-  // ---------------------------
-  // Util: normalizar status (remove acentos e case-insensitive)
-  // ---------------------------
-  function normalizeText(str) {
-    if (!str && str !== 0) return '';
-    return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  }
-
-  // ---------------------------
-  // Mostrar grade de números
-  // ---------------------------
-  function mostrarNumeros(dados) {
-    const c = document.getElementById('gradeNumeros');
-    c.innerHTML = '';
-    if (!dados || !dados.length) {
-      c.innerHTML = '<p>Sem números na planilha.</p>';
-      return;
+  // abrir formulário (clicável somente se não bloqueado)
+  function abrirFormulario(num){
+    if (blockedByMeta) { alert('Reservas temporariamente bloqueadas: meta de vendas atingida.'); return; }
+    const reservedContact = localStorage.getItem(STORAGE_KEY);
+    if(reservedContact){
+      const ok=confirm('Este navegador já registrou uma reserva com um contato. Deseja continuar?');
+      if(!ok) return;
     }
-    dados.forEach(item => {
+    numeroSelecionado=num;
+    numeroEscolhidoEl.textContent=num;
+    formEl.style.display='block';
+    mensagemEl.textContent='';
+    aposReservaCard.style.display='none';
+    setTimeout(()=> window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth'}),200);
+  }
+
+  // cancelar
+  btnCancelar.addEventListener('click', ()=>{
+    formEl.style.display='none';
+    numeroSelecionado=null;
+    numeroEscolhidoEl.textContent='';
+    mensagemEl.textContent='';
+    aposReservaCard.style.display='none';
+  });
+
+  // copiar PIX
+  copyPixBtn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(pixKeyText.textContent||PIX_DEFAULT).then(()=>alert('PIX copiado!')).catch(()=>alert('Copie manualmente: '+pixKeyText.textContent));
+  });
+
+  // instruções
+  instrBtn.addEventListener('click',()=>alert('Abra sua carteira PIX, cole a chave e realize o pagamento. Em seguida envie o comprovante no grupo do WhatsApp.'));
+
+  // enviar reserva
+  btnEnviar.addEventListener('click', ()=>{
+    const nome = el('nome').value.trim();
+    const email = el('email').value.trim();
+    const contato = el('contato').value.trim();
+    if(!nome||!email||!contato){mensagemEl.style.color='red';mensagemEl.textContent='Preencha nome, e-mail e WhatsApp.';return;}
+    if(!numeroSelecionado){mensagemEl.style.color='red';mensagemEl.textContent='Selecione um número antes.';return;}
+    mensagemEl.style.color='black';mensagemEl.textContent='Enviando reserva...';
+    if(!window.google||!google.script||!google.script.run){mensagemEl.style.color='red';mensagemEl.textContent='Integração com Google Apps Script não detectada.';return;}
+
+    google.script.run.withSuccessHandler(res=>{
+      if(!res){mensagemEl.style.color='red';mensagemEl.textContent='Erro inesperado.';return;}
+      if(!res.success){mensagemEl.style.color='red';mensagemEl.textContent=res.message||'Erro ao reservar.';return;}
+      mensagemEl.style.color='green';mensagemEl.textContent=res.message||'Reservado com sucesso!';
+      try{localStorage.setItem(STORAGE_KEY,contato);}catch(e){}
+      pixKeyText.textContent=res.pix||PIX_DEFAULT;
+      grupoLink.href=GRUPO_LINK;
+      aposReservaCard.style.display='block';
+      atualizarGrade();
+    }).reservarNumero(numeroSelecionado,nome,email,contato);
+  });
+
+  // render grade helpers
+  function statusParaClasse(status){
+    if(!status) return 'disponivel';
+    const s = String(status).toLowerCase();
+    if(s.indexOf('venced') !== -1) return 'vencedor';
+    if(s.indexOf('reserv') !== -1) return 'reservado';
+    if(s.indexOf('pag') !== -1) return 'pago';
+    if(s.indexOf('dispon') !== -1 || s.indexOf('disp') !== -1) return 'disponivel';
+    return 'disponivel';
+  }
+
+  function renderGrade(arr){
+    gradeEl.innerHTML='';
+    arr.forEach(d=>{
+      const cls = statusParaClasse(d.status);
       const div = document.createElement('div');
-      div.className = 'numero';
-      const rawNum = item.numero;
-      const displayNum = String(rawNum).padStart(2,'0');
-      const statusRaw = item.status || 'Disponível';
-      const statusNorm = normalizeText(statusRaw);
+      div.className='numero '+cls;
+      div.setAttribute('data-numero',d.numero);
+      div.textContent=d.numero;
 
-      if (statusNorm.indexOf('disp') !== -1 || statusNorm === '') div.classList.add('disponivel');
-      else if (statusNorm.indexOf('reserv') !== -1) div.classList.add('reservado');
-      else if (statusNorm.indexOf('pag') !== -1) div.classList.add('pago');
-
-      div.innerHTML = `<div style="font-size:18px"><strong>${displayNum}</strong></div><div style="font-size:12px;margin-top:6px">${statusRaw}</div>`;
-
-      // armazenar atributo com o número cru (útil para ações)
-      div.dataset.numRaw = rawNum;
-
-      // comportamento ao clicar de acordo com status (Disponível / Reservado / Pago)
-      if (statusNorm.indexOf('disp') !== -1 || statusNorm === '') {
-        div.onclick = () => selecionarNumero(rawNum);
-      } else if (statusNorm.indexOf('reserv') !== -1) {
-        div.onclick = () => {
-          // Prompt rápido para senha (Opção A)
-          const s = prompt('Senha para liberar o número (4 dígitos):');
-          if (s === null) return;
-          google.script.run.withSuccessHandler(res=>{
-            alert(res.mensagem || (res.sucesso ? 'Número liberado' : 'Erro'));
-            carregarDadosPublicos();
-          }).resetNumeroIndividual(rawNum, s);
-        };
-      } else if (statusNorm.indexOf('pag') !== -1) {
-        div.onclick = () => {
-          alert('Esse número já está pago.');
-        };
+      // add small badge for paid
+      if(cls === 'pago'){
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = 'PAGO';
+        div.appendChild(badge);
+        // animate briefly
+        div.classList.add('paid-anim');
+        setTimeout(()=>div.classList.remove('paid-anim'),900);
       }
 
-      c.appendChild(div);
-    });
-  }
-
-  // ---------------------------
-  // Selecionar e reservar
-  // ---------------------------
-  function selecionarNumero(num) {
-    // num é o valor cru vindo do sheet (ex: 1)
-    numeroSelecionadoRaw = num;
-    numeroSelecionadoDisplay = String(num).padStart(2,'0');
-    document.getElementById('numeroEscolhido').innerText = numeroSelecionadoDisplay;
-    document.getElementById('formulario').style.display = 'block';
-    document.getElementById('mensagem').innerText = '';
-    document.getElementById('aposReserva').style.display = 'none';
-    setTimeout(()=>{ window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' }); }, 200);
-  }
-
-  function enviarReserva(){
-    const nome = document.getElementById('nome').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const contato = document.getElementById('contato').value.trim();
-    if (!nome || !email || !contato) {
-      document.getElementById('mensagem').style.color = 'red';
-      document.getElementById('mensagem').innerText = 'Preencha todos os campos!';
-      return;
-    }
-    if (numeroSelecionadoRaw === null) {
-      document.getElementById('mensagem').style.color = 'red';
-      document.getElementById('mensagem').innerText = 'Selecione um número antes de reservar.';
-      return;
-    }
-
-    document.getElementById('mensagem').style.color = 'black';
-    document.getElementById('mensagem').innerText = 'Enviando reserva...';
-
-    // ENVIAR O VALOR CRU (não o com zero à esquerda) para o servidor
-    google.script.run.withSuccessHandler(res => {
-      if (!res) {
-        document.getElementById('mensagem').style.color = 'red';
-        document.getElementById('mensagem').innerText = 'Erro inesperado.';
-        return;
-      }
-      document.getElementById('mensagem').style.color = res.success ? 'green' : 'red';
-      document.getElementById('mensagem').innerText = res.message || '';
-      if (res.success) {
-        ultimaReserva = res.reserva || null;
-        // Preenche área pós-reserva com link do grupo e mensagem pronta
-        document.getElementById('linkGrupo').href = res.grupoWhatsapp || 'https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg';
-        document.getElementById('mensagemPronta').value = criarMensagemPronta(res.reserva);
-        document.getElementById('aposReserva').style.display = 'block';
+      if(!blockedByMeta && cls === 'disponivel') {
+        div.addEventListener('click',()=>abrirFormulario(d.numero));
       } else {
-        document.getElementById('aposReserva').style.display = 'none';
+        if(blockedByMeta && cls === 'disponivel') div.classList.add('blocked');
       }
-      // atualizar grade
-      google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
-      google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
-    }).reservarNumero(numeroSelecionadoRaw, nome, email, contato);
-  }
 
-  function criarMensagemPronta(reserva) {
-    if (!reserva) return '';
-    return `Olá! Acabei de reservar um número na rifa.\n\nNúmero: ${reserva.numero}\nCódigo: ${reserva.codigo}\nNome: ${reserva.nome}\nE-mail: ${reserva.email}\nWhatsApp: ${reserva.contato}\n\nFavor confirmar instruções de pagamento.`;
-  }
+      // if winner mark
+      if(cls === 'vencedor') {
+        // ensure winner style present; it will be animated during raffle via .pulse
+        div.classList.add('vencedor');
+      }
 
-  // Abre WhatsApp com mensagem pronta (API sem número, usuário escolhe destinatário)
-  function abrirWhatsapp() {
-    const texto = encodeURIComponent(document.getElementById('mensagemPronta').value || '');
-    const url = 'https://api.whatsapp.com/send?text=' + texto;
-    window.open(url, '_blank');
-  }
-
-  function copiarMensagem() {
-    const txt = document.getElementById('mensagemPronta').value || '';
-    navigator.clipboard.writeText(txt).then(()=> {
-      alert('Mensagem copiada! Cole no WhatsApp para enviar ao organizador.');
-    }).catch(()=> {
-      alert('Não foi possível copiar automaticamente. Selecione e copie manualmente.');
+      gradeEl.appendChild(div);
     });
   }
 
-  // ---------------------------
-  // Dados do sorteio (público)
-  // ---------------------------
-  function popularDadosSorteio(info) {
-    if (!info) return;
-    document.getElementById('infoNumero').innerText = info.numeroSorteio || '--';
-    // Se for objeto Date, toLocaleString; se for string, exibir como veio
-    try {
-      const l = info.dataHora;
-      if (l instanceof Date) document.getElementById('infoDataHora').innerText = l.toLocaleString();
-      else document.getElementById('infoDataHora').innerText = l || '--';
-    } catch(e){
-      document.getElementById('infoDataHora').innerText = info.dataHora || '--';
-    }
-    document.getElementById('infoValor').innerText = info.valor || '--';
-    document.getElementById('infoPremio').innerText = info.premio || '--';
-    // também preenche inputs admin se estiver visível
-    if (document.getElementById('adminInputNumero')) {
-      document.getElementById('adminInputNumero').value = info.numeroSorteio || '';
-      try {
-        if (info.dataHora) {
-          const d = new Date(info.dataHora);
-          const local = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
-          document.getElementById('adminInputDataHora').value = local;
+  function renderDefaults(){const arr=[];for(let i=0;i<100;i++) arr.push({numero:pad(i),status:'Disponível'});renderGrade(arr);}
+
+  function atualizarGrade(){
+    if(!window.google||!google.script||!google.script.run){renderDefaults();return;}
+    google.script.run.withSuccessHandler(dados=>{
+      renderGrade(dados&&dados.length?dados:[]);
+    }).listarNumeros();
+  }
+
+  // DADOS J→Q
+  function atualizarDadosJQ(){
+    if(!window.google||!google.script||!google.script.run) return;
+    google.script.run.withSuccessHandler(info=>{
+      if(!info) return;
+      el('infoJ').textContent=info.J||'--';
+      el('infoK').textContent=info.K||'--';
+      el('infoL').textContent=info.L||'--';
+      el('infoM').textContent=info.M||'--';
+      el('infoN').textContent=info.N||'--';
+      el('infoO').textContent=info.O||'--';
+      el('infoP').textContent=info.P||'--';
+      el('infoQ').textContent=info.Q||'--';
+
+      // bloquear por meta: Q >= P (considera somente números)
+      const meta = Number((info.P||'').toString().replace(/[^\d]/g,'')) || 0;
+      const total = Number((info.Q||'').toString().replace(/[^\d]/g,'')) || 0;
+      blockedByMeta = (meta > 0 && total >= meta);
+
+      if(adminArea.style.display!=='none'){
+        const active = document.activeElement;
+        const editing = Object.values(adminFields).includes(active);
+        if(!editing){
+          adminFields.J.value=info.J||'';
+          adminFields.K.value=info.K||'';
+          adminFields.L.value=info.L||'';
+          adminFields.M.value=info.M||'';
+          try{if(info.N){const d=new Date(info.N);adminFields.N.value=isNaN(d.getTime())?info.N:new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);}else adminFields.N.value='';}catch(e){adminFields.N.value=info.N||'';}
+          adminFields.O.value=info.O||'';
+          adminFields.P.value=info.P||'';
+          adminFields.Q.value=info.Q||'';
         }
-      } catch(e){}
-      document.getElementById('adminInputValor').value = info.valor || '';
-      document.getElementById('adminInputPremio').value = info.premio || '';
-    }
-  }
-
-  // ---------------------------
-  // Admin: entrar (client-side show only)
-  // ---------------------------
-  function entrarAdmin() {
-    const s = (document.getElementById('senhaAdmin').value || '').trim();
-    if (!s) {
-      document.getElementById('msgSenha').innerText = 'Digite a senha para acessar.';
-      return;
-    }
-    if (s !== '8378') {
-      document.getElementById('msgSenha').innerText = 'Senha incorreta.';
-      return;
-    }
-    document.getElementById('msgSenha').innerText = '';
-    document.getElementById('senhaContainer').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    carregarDadosPublicos();
-  }
-
-  // ---------------------------
-  // Admin: salvar dados do sorteio
-  // ---------------------------
-  function salvarDadosSorteio() {
-    const numero = document.getElementById('adminInputNumero').value || '';
-    const dataHora = document.getElementById('adminInputDataHora').value || '';
-    const valor = document.getElementById('adminInputValor').value || '';
-    const premio = document.getElementById('adminInputPremio').value || '';
-    document.getElementById('msgSalvarDados').innerText = 'Salvando...';
-    google.script.run.withSuccessHandler(res=>{
-      if (res && res.success) {
-        document.getElementById('msgSalvarDados').innerText = 'Dados salvos com sucesso!';
-        carregarDadosPublicos();
-      } else {
-        document.getElementById('msgSalvarDados').innerText = 'Erro ao salvar.';
       }
-    }).salvarDadosSorteio(numero, dataHora, valor, premio);
+
+      atualizarGrade();
+    }).dadosJQ();
   }
 
-  // ---------------------------
-  // Admin: executar sorteio (senha server-side)
-  // ---------------------------
-  function executarSorteio() {
-    const s = prompt('Digite a senha do sorteio (4 dígitos):');
-    if (!s) return;
-    document.getElementById('msgSorteio').innerText = 'Executando sorteio...';
+  // ADMIN
+  btnEntrarAdmin.addEventListener('click', ()=>{
+    const s=senhaAdmin.value.trim();
+    if(!s){alert('Digite a senha');return;}
+    adminArea.style.display='block';
+    atualizarDadosJQ();
+  });
+
+  btnAtualizarPublico.addEventListener('click', ()=>{ atualizarGrade(); atualizarDadosJQ(); });
+
+  btnSalvarJQ.addEventListener('click', ()=>{
+    const j=adminFields.J.value.trim();
+    const k=adminFields.K.value.trim();
+    const l=adminFields.L.value.trim();
+    const m=adminFields.M.value.trim();
+    const n=adminFields.N.value.trim();
+    const o=adminFields.O.value.trim();
+    const p=adminFields.P.value.trim();
+    const q=adminFields.Q.value.trim();
     google.script.run.withSuccessHandler(res=>{
-      if (!res) {
-        document.getElementById('msgSorteio').style.color='red';
-        document.getElementById('msgSorteio').innerText = 'Erro inesperado.';
+      if(res&&res.success){adminMsgs.textContent='Dados salvos com sucesso.'; atualizarDadosJQ();}
+      else adminMsgs.textContent='Erro ao salvar.';
+    }).salvarDadosSorteio(j||'',k||'',l||'',m||'',o||'',p||'',q||'');
+  });
+
+  btnResetReservas.addEventListener('click',()=>{
+    if(!confirm('Resetar apenas reservas NÃO pagas?')) return;
+    google.script.run.withSuccessHandler(res=>{alert(res.message||'Operação concluída.'); atualizarGrade(); atualizarDadosJQ();}).resetarReservasNaoPagas();
+  });
+
+  btnResetRifa.addEventListener('click',()=>{
+    if(!confirm('Resetar toda a rifa (apaga reservas/pagamentos)?')) return;
+    google.script.run.withSuccessHandler(res=>{alert(res.message||'Rifa resetada.'); atualizarGrade(); atualizarDadosJQ();}).resetarRifaCompleta();
+  });
+
+  btnConfirmarPagamento.addEventListener('click', ()=>{
+    const num = confirmarNumero.value.trim();
+    const senha = confirmarSenha.value.trim();
+    if(!num||!senha){alert('Informe número e senha');return;}
+    google.script.run.withSuccessHandler(res=>{
+      if(res&&res.sucesso){alert(res.mensagem||'Pagamento confirmado'); atualizarGrade(); atualizarDadosJQ();}
+      else alert(res.mensagem||'Erro ao confirmar pagamento');
+    }).confirmarPagamento(Number(num),senha);
+  });
+
+  // ---------- SORTEIO PÚBLICO (variação de velocidade, 60s) ----------
+btnIniciarSorteio.addEventListener('click', () => {
+  const senha = prompt('Senha admin:');
+  if (!senha) return;
+
+  // pega lista de pagos do servidor
+  google.script.run.withSuccessHandler(pagos => {
+    if(!pagos || pagos.length === 0) return alert('Não há números pagos para sortear.');
+    const pagosFmt = pagos.map(n => pad(n)); // ex: "03","24","99"
+
+    // UI init
+    sorteioPublico.style.display = 'block';
+    numeroAnimado.textContent = '00';
+    // cancel any previous raffle
+    if (rafflePulseTimer) { clearTimeout(rafflePulseTimer); rafflePulseTimer = null; }
+    document.querySelectorAll('.numero.pulse').forEach(n => n.classList.remove('pulse'));
+
+    // configuração
+    const TOTAL_MS = 60000; // 60s total
+    const start = Date.now();
+    let lastTick = 0;
+
+    // easing para variar velocidade: retorna delay em ms entre ticks dependendo do elapsed
+    // começa lento (300ms), acelera até 50ms no pico, depois desacelera para suspense final (~400ms)
+    function dynamicDelay(elapsed) {
+      const t = Math.min(1, elapsed / TOTAL_MS); // 0..1
+      // vamos criar uma curva: slow (0-0.12) -> accelerate (0.12-0.45) -> very fast (0.45-0.85) -> slow end (0.85-1)
+      if (t < 0.12) return 350;                    // inicio lento
+      if (t < 0.45) return 200 - ( (t - 0.12) / (0.45 - 0.12) ) * 120; // 200 -> 80
+      if (t < 0.85) return 80 - ( (t - 0.45) / (0.85 - 0.45) ) * 50;    // 80 -> 30 (muito rápido)
+      // desacelera para final dramatico
+      return 170 + ( (t - 0.85) / (1 - 0.85) ) * 230; // 170 -> ~400
+    }
+
+    // função que executa um tick: mostra um paid aleatório e anima alguns payment-nodes
+    function tick() {
+      const elapsed = Date.now() - start;
+      if (elapsed >= TOTAL_MS) {
+        // final: escolhe vencedor definitivo (servidor)
+        endRaffleAndRegister(pagosFmt);
         return;
       }
-      if (res.erro) {
-        document.getElementById('msgSorteio').style.color='red';
-        document.getElementById('msgSorteio').innerText = res.erro;
-      } else if (res.sucesso) {
-        document.getElementById('msgSorteio').style.color='green';
-        document.getElementById('msgSorteio').innerText = 'Sorteado: ' + res.numero;
-        carregarDadosPublicos();
-      } else {
-        document.getElementById('msgSorteio').style.color='red';
-        document.getElementById('msgSorteio').innerText = 'Resultado inesperado.';
+
+      // escolhe um random para mostrar no centro
+      const chosen = pagosFmt[Math.floor(Math.random() * pagosFmt.length)];
+      numeroAnimado.textContent = chosen;
+
+      // anima alguns nós pagos aleatórios (pulse)
+      document.querySelectorAll('.numero.pulse').forEach(n => n.classList.remove('pulse'));
+      const pickCount = Math.min(5, pagosFmt.length);
+      for (let i = 0; i < pickCount; i++) {
+        const v = pagosFmt[Math.floor(Math.random() * pagosFmt.length)];
+        const node = document.querySelector(`.numero[data-numero="${v}"]`);
+        if (node) node.classList.add('pulse');
       }
-    }).realizarSorteio(s);
-  }
 
-  // ---------------------------
-  // Admin: resetar reservas não pagas
-  // ---------------------------
-  function resetarReservasNaoPagas() {
-    if (!confirm('Resetar apenas reservas NÃO pagas? (os números marcados como Pago serão mantidos)')) return;
+      // schedule next tick com delay dinâmico
+      const delay = dynamicDelay(elapsed);
+      lastTick = setTimeout(tick, delay);
+      rafflePulseTimer = lastTick;
+    }
+
+    // finaliza: remove pulses, escolhe vencedor final e registra no servidor
+    function endRaffleAndRegister(pagosFmt) {
+      document.querySelectorAll('.numero.pulse').forEach(n => n.classList.remove('pulse'));
+      // decisão final deve ser do servidor para evitar manipulação: vamos escolher localmente a exibição,
+      // mas em seguida chamar registrarResultadoSorteio(final) que grava no servidor e retorna confirmação.
+      const vencedor = pagosFmt[Math.floor(Math.random() * pagosFmt.length)];
+      numeroAnimado.textContent = vencedor;
+      // marca visualmente
+      document.querySelectorAll('.numero.vencedor').forEach(n => n.classList.remove('vencedor'));
+      const winnerNode = document.querySelector(`.numero[data-numero="${vencedor}"]`);
+      if (winnerNode) winnerNode.classList.add('vencedor');
+
+      // chama o servidor para registrar (servidor usa método seguro e grava em planilha)
+      google.script.run.withSuccessHandler(res => {
+        if (res && res.success) {
+          alert('Sorteio registrado! Vencedor: ' + vencedor);
+          atualizarGrade(); atualizarDadosJQ();
+        } else {
+          alert('Erro ao registrar resultado: ' + (res && res.message || 'erro servidor'));
+          // opcional: re-sync grade
+          atualizarGrade(); atualizarDadosJQ();
+        }
+      }).registrarResultadoSorteio(Number(vencedor));
+    }
+
+    // start ticking
+    tick();
+
+  }).listarPagos();
+});
+
+  btnRegistrarResultado.addEventListener('click', ()=>{
+    const manualNum = prompt('Numero final (00..99):');
+    if(!manualNum) return;
     google.script.run.withSuccessHandler(res=>{
-      alert(res.message || 'Operação concluída.');
-      carregarDadosPublicos();
-    }).resetarReservasNaoPagas();
-  }
+      if(res&&res.success){alert('Resultado registrado: '+res.numero); atualizarDadosJQ(); atualizarGrade();}
+      else alert('Erro registrar resultado.');
+    }).registrarResultadoSorteio(manualNum);
+  });
 
-  // ---------------------------
-  // Admin: resetar rifa completa
-  // ---------------------------
-  function resetarRifaCompleta() {
-    if (!confirm('Resetar toda a rifa (isso apagará todas as reservas e pagamentos)!')) return;
+  // ADMIN: liberar reservas temporariamente / desbloquear
+  btnLiberarReservas.addEventListener('click', ()=>{
+    const mins = liberarMinutos.value.trim();
+    const senha = liberarSenha.value.trim();
+    if(!senha){alert('Informe a senha admin para liberar.');return;}
     google.script.run.withSuccessHandler(res=>{
-      alert(res.message || 'Rifa resetada.');
-      carregarDadosPublicos();
-    }).resetarRifaCompleta();
+      if(res && res.success){adminMsgs.textContent = res.message; atualizarDadosJQ(); atualizarGrade();}
+      else adminMsgs.textContent = res.message || 'Erro ao liberar reservas.';
+    }).liberarReservasTemporariamente(senha, mins || 10);
+  });
+
+  btnDesbloquear.addEventListener('click', ()=>{
+    const senha = liberarSenha.value.trim();
+    if(!senha){alert('Informe a senha admin para desbloquear.');return;}
+    google.script.run.withSuccessHandler(res=>{
+      if(res && res.success){adminMsgs.textContent = res.message; atualizarDadosJQ(); atualizarGrade();}
+      else adminMsgs.textContent = res.message || 'Erro ao desbloquear.';
+    }).desbloquearReservas(senha);
+  });
+
+  // inicial
+  renderDefaults();
+  atualizarGrade();
+atualizarDadosJQ();
+setInterval(atualizarGrade, 5000);
+setInterval(atualizarDadosJQ, 7000);
+
+  // debug
+  window.ftc = { atualizarGrade, atualizarDadosJQ, renderDefaults };
+})();
+
+  // Mostrar painel público
+  const painel = document.getElementById("sorteioPublico");
+  painel.style.display = "block";
+  painel.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  const alvo = parseInt(res.numero, 10);
+  const animado = document.getElementById("numeroAnimado");
+
+  let tempoTotal = 60000; // 60s
+  let tempoPassado = 0;
+
+  function velocidadeVariavel() {
+    // velocidade muda em 5 fases para quebrar padrão repetido
+    const p = tempoPassado / tempoTotal;
+    if (p < 0.15) return 40 + Math.random() * 25;    // rápido no início
+    if (p < 0.35) return 70 + Math.random() * 60;
+    if (p < 0.60) return 120 + Math.random() * 110;
+    if (p < 0.85) return 200 + Math.random() * 200;
+    return 380 + Math.random() * 300;                // bem lento no final
   }
 
-  // ---------------------------
-  // Util: atualizar dados manualmente
-  // ---------------------------
-  function carregarDadosPublicos() {
-    google.script.run.withSuccessHandler(popularDadosSorteio).dadosSorteio();
-    google.script.run.withSuccessHandler(mostrarNumeros).listarNumeros();
+  function rodar() {
+    const n = Math.floor(Math.random() * res.maximo) + 1;
+    animado.textContent = n.toString().padStart(2, "0");
+    tempoPassado += velocidade;
+
+    if (tempoPassado >= tempoTotal) {
+      animado.textContent = alvo.toString().padStart(2, "0");
+      animado.style.color = "var(--gold-2)";
+      animado.style.textShadow = "0 0 15px rgba(255,215,0,0.9)";
+      return;
+    }
+
+    velocidade = velocidadeVariavel();
+    setTimeout(rodar, velocidade);
   }
+
+  let velocidade = velocidadeVariavel();
+  rodar();
+
+  let monitorSorteio = null;
+
+function iniciarMonitorPublico() {
+  if (monitorSorteio) clearInterval(monitorSorteio);
+
+  monitorSorteio = setInterval(() => {
+    google.script.run.withSuccessHandler(estado => {
+
+      if (estado.status === 'RUNNING') {
+        sorteioPublico.style.display = 'block';
+
+        numeroAnimado.textContent =
+          Math.floor(Math.random() * 100).toString().padStart(2, '0');
+
+        if (Date.now() >= estado.fim) {
+          google.script.run.finalizarSorteioPublico();
+        }
+      }
+
+      if (estado.status === 'FINISHED') {
+        clearInterval(monitorSorteio);
+        numeroAnimado.textContent =
+          String(estado.vencedor).padStart(2, '0');
+        destacarVencedorNaGrade(estado.vencedor);
+      }
+
+    }).statusSorteioPublico();
+  }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.hash === '#sorteio') {
+    const el = document.getElementById('sorteioPublico');
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+  }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (location.hash === '#sorteio') {
+    const el = document.getElementById('sorteioPublico');
+    if (el) {
+      el.style.display = 'block';
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+});
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const modoPublico = params.get('publico') === '1';
+
+    if (modoPublico) {
+      const sorteio = document.getElementById('sorteioPublico');
+      if (sorteio) sorteio.style.display = 'block';
+
+      const rifa = document.getElementById('areaRifa');
+      if (rifa) rifa.style.display = 'none';
+
+      if (typeof iniciarMonitorPublico === 'function') {
+        iniciarMonitorPublico();
+      }
+    }
+  });
 
 </script>
 </body>
