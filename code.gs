@@ -1,254 +1,530 @@
-// === FTC PRÊMIOS - SISTEMA DE RIFAS ===
-// Substitua todo o seu Code.gs por este conteúdo
+// === FTC PRÊMIOS — Code.gs (ATUALIZADO: BLOQUEIO AUTOMÁTICO + OVERRIDE ADMIN) ===
 
-const SENHA_SORTEIO = '8378';
+const PROP_SORTEIO = 'SORTEIO_PUBLICO';
+
+function getEstadoSorteio() {
+  const p = PropertiesService.getScriptProperties();
+  const raw = p.getProperty(PROP_SORTEIO);
+  return raw ? JSON.parse(raw) : { status: 'IDLE' };
+}
+
+function setEstadoSorteio(obj) {
+  PropertiesService.getScriptProperties()
+    .setProperty(PROP_SORTEIO, JSON.stringify(obj));
+}
+
+function getSenhaAdmin() {
+  const senha = PropertiesService.getScriptProperties().getProperty('SENHA_ADMIN');
+  if (!senha) {
+    throw new Error('Senha admin não configurada.');
+  }
+  return senha;
+}
+
+const PIX_CHAVE = '9ce163ce-4d97-425a-9a99-445802f3e871';
 
 // ---------------------------
-// doGet -> exibe index.html
+// doGet
 // ---------------------------
-function doGet() {
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('FTC Prêmios - Rifa Online');
+function doGet(e) {
+  const publico = e && e.parameter && e.parameter.publico === '1';
+
+  const html = HtmlService.createTemplateFromFile('index');
+  html.PUBLICO = publico;
+
+  return html.evaluate()
+    .setTitle('FTC Prêmios — Sorteio Público')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 // ---------------------------
-// Listar números (A2:B101)
+// Helper: checa override admin (libera reservas temporariamente)
+// ---------------------------
+function reservasLiberadas() {
+  try {
+    const prop = PropertiesService.getScriptProperties().getProperty('reservas_liberadas_ate');
+    if (!prop) return false;
+    const until = Number(prop);
+    if (isNaN(until)) return false;
+    return Date.now() <= until;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ---------------------------
+// ADMIN: libera reservas temporariamente (minutos opcional, padrão 10)
+// ---------------------------
+function liberarReservasTemporariamente(senha, minutos) {
+  if (String(senha) !== String(getSenhaAdmin())) {
+    return { success: false, message: 'Senha incorreta.' };
+  }
+  const mins = (minutos && Number(minutos)) ? Number(minutos) : 10;
+  const until = Date.now() + Math.max(1, mins) * 60000;
+  PropertiesService.getScriptProperties().setProperty('reservas_liberadas_ate', String(until));
+  return { success: true, message: `Reservas liberadas por ${mins} minuto(s).` };
+}
+
+// ---------------------------
+// ADMIN: cancela override e volta ao comportamento normal
+// ---------------------------
+function desbloquearReservas(senha) {
+  if (String(senha) !== String(getSenhaAdmin())) {
+    return { success: false, message: 'Senha incorreta.' };
+  }
+  PropertiesService.getScriptProperties().deleteProperty('reservas_liberadas_ate');
+  return { success: true, message: 'Override removido. Sistema volta ao bloqueio por meta normalmente.' };
+}
+
+// ---------------------------
+// LISTAR NÚMEROS (normal)
 // ---------------------------
 function listarNumeros() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
   if (!sheet) return [];
-  const dados = sheet.getRange('A2:B101').getValues();
-  return dados.map(r => ({ numero: r[0], status: r[1] }));
+  const dados = sheet.getRange('A2:C101').getValues();
+  return dados.map(r => ({
+    numero: String(r[0]).padStart(2,"0"),
+    status: r[1] || 'Disponível',
+    nome: r[2] || ''
+  }));
 }
 
 // ---------------------------
-// Reserva (verifica 1 aposta por telefone)
+// RESERVAR NÚMERO (verifica meta P/Q e override admin)
 // ---------------------------
 function reservarNumero(numero, nome, email, contato) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
   if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
 
-  // normaliza contato (remove espaços)
-  const contatoNorm = String(contato || '').replace(/\s+/g, '');
+  try {
+    // Checar meta (P2) e total vendidos (Q2)
+    const metaRaw = sheet.getRange('P2').getValue();
+    const totalRaw = sheet.getRange('Q2').getValue();
+    const meta = Number(metaRaw) || 0;
+    const total = Number(totalRaw) || 0;
 
-  // 1) checar se telefone já tem aposta ativa (Reservado ou Pago)
-  const contatos = sheet.getRange('E2:E101').getValues().map(r => String(r[0] || '').replace(/\s+/g, ''));
-  const statusTodas = sheet.getRange('B2:B101').getValues().map(r => String(r[0] || ''));
-
-  for (let i = 0; i < contatos.length; i++) {
-    if (contatos[i] && contatos[i] === contatoNorm && (statusTodas[i] === 'Reservado' || statusTodas[i] === 'Pago')) {
-      return { success: false, message: '⚠️ Este telefone já possui uma aposta ativa.' };
+    // Se meta configurada e atingida — bloquear, a menos que override exista
+    if (meta > 0 && total >= meta) {
+      if (!reservasLiberadas()) {
+        return { success: false, message: 'Reservas temporariamente bloqueadas: meta de vendas atingida.' };
+      }
+      // se reservasLiberadas() true — continua o fluxo normalmente
     }
-  }
 
-  // 2) localizar o número e reservar
-  const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]));
-  for (let i = 0; i < numeros.length; i++) {
-    if (String(numeros[i]) === String(numero)) {
-      const linha = i + 2;
-      const status = sheet.getRange(`B${linha}`).getValue() || 'Disponível';
-      if (status === 'Disponível') {
+    const numeroFormatado = String(numero).padStart(2, "0");
+    const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]).padStart(2, "0"));
+
+    for (let i = 0; i < numeros.length; i++) {
+      if (numeros[i] === numeroFormatado) {
+        const linha = i + 2;
+
+        const status = sheet.getRange(`B${linha}`).getValue() || 'Disponível';
+        if (String(status).toLowerCase().indexOf('disp') === -1 && String(status).toLowerCase().indexOf('dispon') === -1) {
+          return { success: false, message: `Número ${numeroFormatado} já reservado ou pago.` };
+        }
+
         const codigo = gerarCodigo();
         sheet.getRange(`B${linha}`).setValue('Reservado');
-        sheet.getRange(`C${linha}`).setValue(nome);
-        sheet.getRange(`D${linha}`).setValue(email);
-        sheet.getRange(`E${linha}`).setValue(contatoNorm);
+        sheet.getRange(`C${linha}`).setValue(nome || '');
+        sheet.getRange(`D${linha}`).setValue(email || '');
+        sheet.getRange(`E${linha}`).setValue(String(contato || '').replace(/\s+/g,''));
         sheet.getRange(`F${linha}`).setValue(codigo);
         sheet.getRange(`G${linha}`).setValue(new Date());
         sheet.getRange(`H${linha}`).setValue('Não');
 
-        // Retornar dados úteis ao frontend para construir mensagem whatsapp
         return {
           success: true,
-          message: `✅ Número ${numero} reservado com sucesso! Código: ${codigo}`,
-          reserva: {
-            numero: String(numero),
-            codigo: codigo,
-            nome: nome,
-            email: email,
-            contato: contatoNorm
-          },
-          grupoWhatsapp: 'https://chat.whatsapp.com/KzozjpPbC3UHIIEkTYuQrg'
+          message: `Número ${numeroFormatado} reservado com sucesso!`,
+          reserva: { numero: numeroFormatado, codigo, nome, email, contato },
+          pix: PIX_CHAVE,
+          grupoWhatsapp: ''
         };
-      } else {
-        return { success: false, message: `⚠️ O número ${numero} já foi reservado ou pago.` };
       }
     }
-  }
 
-  return { success: false, message: '❌ Número não encontrado.' };
+    return { success: false, message: 'Número não encontrado.' };
+  } catch (err) {
+    console.error('Erro reservarNumero:', err);
+    return { success: false, message: 'Erro interno: ' + err.message };
+  }
 }
 
 // ---------------------------
-// Confirmar pagamento (marca Pago) - mantive caso queira usar manualmente no admin
+// CONFIRMAR PAGAMENTO (ATUALIZADO: incrementa Q apenas se não estava Pago)
 // ---------------------------
-function confirmarPagamentoNoSheet(numero) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
-
-  const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]));
-  for (let i = 0; i < numeros.length; i++) {
-    if (String(numeros[i]) === String(numero)) {
-      const linha = i + 2;
-      sheet.getRange(`B${linha}`).setValue('Pago');
-      sheet.getRange(`H${linha}`).setValue('Sim');
-      // Não usamos coluna I no seu layout; se quiser registrar data, pode usar outra coluna
-      return { success: true, message: `✅ Número ${numero} marcado como Pago.` };
+function confirmarPagamento(numero, senha) {
+  try {
+    if (String(senha) !== String(getSenhaAdmin())) {
+      return { sucesso: false, mensagem: 'Senha incorreta.' };
     }
-  }
-  return { success: false, message: 'Número não encontrado.' };
-}
 
-// ---------------------------
-// Dados do sorteio (K2..N2)
-// ---------------------------
-function dadosSorteio() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { numeroSorteio: "--", dataHora: "--", valor: "--", premio: "--" };
-  return {
-    numeroSorteio: sheet.getRange("K2").getValue() || "",
-    dataHora: sheet.getRange("L2").getValue() || "",
-    valor: sheet.getRange("M2").getValue() || "",
-    premio: sheet.getRange("N2").getValue() || ""
-  };
-}
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('rifa');
+    if (!sheet) return { sucesso: false, mensagem: 'Planilha "rifa" não encontrada.' };
 
-// ---------------------------
-// Salvar dados do sorteio (editáveis pelo admin)
-// ---------------------------
-function salvarDadosSorteio(numero, dataHora, valor, premio) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { success: false };
-  sheet.getRange("K2").setValue(numero || "");
-  sheet.getRange("L2").setValue(dataHora || "");
-  sheet.getRange("M2").setValue(valor || "");
-  sheet.getRange("N2").setValue(premio || "");
-  return { success: true };
-}
+    const numeroFormatado = String(numero).padStart(2, "0");
+    const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]).padStart(2,"0"));
 
-// ---------------------------
-// Realizar Sorteio (apenas números Pago) - valida senha server-side
-// ---------------------------
-function realizarSorteio(senha) {
-  if (String(senha) !== SENHA_SORTEIO) return { erro: "Senha incorreta." };
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { erro: 'Planilha "rifa" não encontrada.' };
+    for (let i = 0; i < numeros.length; i++) {
+      if (numeros[i] === numeroFormatado) {
+        const linha = i + 2;
 
-  const dados = sheet.getRange('A2:B101').getValues();
-  const pagos = [];
-  for (let i = 0; i < dados.length; i++) {
-    const num = dados[i][0];
-    const status = dados[i][1];
-    if (String(status).toLowerCase() === 'pago') {
-      pagos.push(num);
+        // lê status atual e flag pago (coluna B e H)
+        const statusAtual = String(sheet.getRange(`B${linha}`).getValue() || '').trim();
+        const flagPago = String(sheet.getRange(`H${linha}`).getValue() || '').trim();
+
+        // se já estava pago, não incrementa Q novamente
+        const jaEstavaPago = statusAtual.toLowerCase().indexOf('pag') !== -1 || flagPago.toLowerCase() === 'sim';
+
+        // marca como Pago
+        sheet.getRange(`B${linha}`).setValue('Pago');
+        sheet.getRange(`H${linha}`).setValue('Sim');
+
+        // se não estava pago antes, incrementa Q
+        if (!jaEstavaPago) {
+          try {
+            const qRange = sheet.getRange('Q2');
+            const qValRaw = qRange.getValue();
+            let qVal = Number(qValRaw);
+            if (isNaN(qVal)) qVal = 0;
+            qRange.setValue(qVal + 1);
+          } catch (err) {
+            console.error('Erro atualizando Q:', err);
+            // não falhar a confirmação por causa do contador; apenas log
+          }
+        }
+
+        return { sucesso: true, mensagem: `Pagamento do número ${numeroFormatado} confirmado.` };
+      }
     }
+
+    return { sucesso: false, mensagem: 'Número não encontrado.' };
+
+  } catch (err) {
+    console.error('Erro confirmarPagamento:', err);
+    return { sucesso: false, mensagem: 'Erro interno: ' + err.message };
   }
-
-  if (pagos.length === 0) return { erro: "Não há números pagos para sortear." };
-
-  const vencedor = pagos[Math.floor(Math.random() * pagos.length)];
-
-  // Gravar resultado em K2..N2 (data/hora atual, manter valor e prêmio já salvos)
-  sheet.getRange("K2").setValue(sheet.getRange("K2").getValue() || "");
-  sheet.getRange("L2").setValue(new Date());
-  return { sucesso: true, numero: vencedor.toString() };
 }
 
 // ---------------------------
-// Resetar reservas NÃO pagas (mantém Pago intactos)
+// DADOS J → Q (painel central público/admin)
+// ---------------------------
+function dadosJQ() {
+  const ss = SpreadsheetApp.getActive();
+  const s = ss.getSheetByName('rifa');
+  if (!s) {
+    return { J: "--", K: "--", L: "--", M: "--", N: "--", O: "--", P: "--", Q: "--" };
+  }
+  const J = s.getRange("J2").getDisplayValue() || "";
+  const K = s.getRange("K2").getDisplayValue() || "";
+  const L = s.getRange("L2").getDisplayValue() || "";
+  const M = s.getRange("M2").getDisplayValue() || "";
+  const N = s.getRange("N2").getDisplayValue() || "";
+  const O = s.getRange("O2").getDisplayValue() || "";
+  const P = s.getRange("P2").getDisplayValue() || "";
+  const Q = s.getRange("Q2").getDisplayValue() || "";
+  return { J, K, L, M, N, O, P, Q };
+}
+
+// ---------------------------
+// salvarDadosSorteio (grava J..Q linha 2)
+// ---------------------------
+function salvarDadosSorteio(numeroSorteado, codigoGanhador, numeroSorteio, valorCobrado, premio, metaVendas, totalVendido) {
+  const ss = SpreadsheetApp.getActive();
+  const s = ss.getSheetByName('rifa');
+  if (!s) return { success: false, message: "Aba 'rifa' não encontrada." };
+
+  try {
+    const agora = new Date(); 
+    const tz = ss.getSpreadsheetTimeZone();
+    const dataHoraLocal = Utilities.formatDate(agora, tz, "yyyy-MM-dd'T'HH:mm");
+
+    s.getRange("J2").setValue(numeroSorteado || "");
+    s.getRange("K2").setValue(codigoGanhador || "");
+    s.getRange("L2").setValue(numeroSorteio || "");
+    s.getRange("M2").setValue(valorCobrado || "");
+    s.getRange("N2").setValue(dataHoraLocal);
+    s.getRange("O2").setValue(premio || "");
+    s.getRange("P2").setValue(metaVendas || "");
+    s.getRange("Q2").setValue(totalVendido || "");
+
+    return { success: true, message: "Dados gravados com sucesso." };
+  } catch (e) {
+    console.error('Erro salvarDadosSorteio:', e);
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ---------------------------
+// registrarResultadoSorteio (marca vencedor e grava J..Q)
+// ---------------------------
+function registrarResultadoSorteio(finalNum, numeroSorteio, valor, dataHora, premio, metaVendas, totalVendido) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('rifa');
+    if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
+
+    const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]).padStart(2,'0'));
+    const linhaIdx = numeros.findIndex(n => n === String(finalNum).padStart(2,'0'));
+    if (linhaIdx === -1) return { success: false, message: 'Número não encontrado.' };
+
+    const linha = linhaIdx + 2;
+    const codigoCheio = sheet.getRange(`F${linha}`).getValue() || '';
+    const nomeGanhador = sheet.getRange(`C${linha}`).getValue() || '';
+
+    const codigo3 = String(codigoCheio).substring(0,3);
+
+    const numSorteio = numeroSorteio || sheet.getRange('L2').getValue() || '';
+    const valorSorteio = (valor !== undefined && valor !== null) ? valor : sheet.getRange('M2').getValue() || '';
+    const dataSorteio = dataHora || sheet.getRange('N2').getValue() || new Date();
+    const premioSorteio = premio || sheet.getRange('O2').getValue() || '';
+
+    // grava J..Q na linha 2
+    sheet.getRange('J2').setValue(String(finalNum).padStart(2,'0'));
+    sheet.getRange('K2').setValue(codigo3);
+    sheet.getRange('L2').setValue(numSorteio);
+    sheet.getRange('M2').setValue(valorSorteio);
+    sheet.getRange('N2').setValue(dataSorteio);
+    sheet.getRange('O2').setValue(premioSorteio);
+
+    if (metaVendas !== undefined) sheet.getRange('P2').setValue(metaVendas);
+    if (totalVendido !== undefined) sheet.getRange('Q2').setValue(totalVendido);
+
+    // marca vencedor na linha do número
+    sheet.getRange(`I${linha}`).setValue('Vencedor');
+
+    return { success: true, numero: String(finalNum).padStart(2,'0'), codigo: codigo3, nome: nomeGanhador };
+  } catch (err) {
+    console.error('Erro registrarResultadoSorteio:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+// ---------------------------
+// reset / util / debug (mantidos e robustos)
 // ---------------------------
 function resetarReservasNaoPagas() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { success: false, message: 'Planilha não encontrada.' };
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
+    if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
 
-  const dadosStatus = sheet.getRange('B2:B101').getValues();
-  for (let i = 0; i < dadosStatus.length; i++) {
-    const status = String(dadosStatus[i][0] || '');
-    const linha = i + 2;
-    if (status === 'Reservado') {
-      // Limpa colunas C..G e seta Disponível + H = Não
-      sheet.getRange(`B${linha}`).setValue('Disponível');
-      sheet.getRange(`C${linha}:G${linha}`).clearContent();
-      sheet.getRange(`H${linha}`).setValue('Não');
-    }
-  }
-  return { success: true, message: 'Reservas não pagas foram resetadas.' };
-}
-
-
-// ---------------------------
-// RESET INDIVIDUAL (somente se Reservado e senha correta)
-// ---------------------------
-function resetNumeroIndividual(numero, senha) {
-  const SENHA_CORRETA = SENHA_SORTEIO;
-  if (String(senha) !== String(SENHA_CORRETA)) {
-    return { sucesso: false, mensagem: 'Senha incorreta!' };
-  }
-
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { sucesso: false, mensagem: 'Planilha "rifa" não encontrada.' };
-
-  // Lê linhas A2:H101
-  const dados = sheet.getRange(2, 1, 100, 8).getValues(); // 100 linhas: 2..101
-
-  for (let i = 0; i < dados.length; i++) {
-    const num = dados[i][0];
-    const status = String(dados[i][1] || '').toLowerCase();
-    if (String(num) === String(numero)) {
-      // Se já estiver pago (coluna H = 'Sim') -> bloqueado
-      const pago = String(dados[i][7] || '').toLowerCase();
-      if (pago === 'sim' || status.indexOf('pag') !== -1) {
-        return { sucesso: false, mensagem: 'Não é possível resetar um número já pago!' };
+    const dados = sheet.getRange('A2:H101').getValues();
+    dados.forEach((row, i) => {
+      if (row[1] === 'Reservado' && row[7] !== 'Sim') {
+        sheet.getRange(`B${i+2}`).setValue('Disponível');
+        sheet.getRange(`C${i+2}:G${i+2}`).clearContent();
       }
-
-      // Só resetamos se estiver Reservado (ou outro status que não seja Pago)
-      sheet.getRange(i + 2, 2).setValue('Disponível'); // B
-      sheet.getRange(i + 2, 3).setValue(''); // C nome
-      sheet.getRange(i + 2, 4).setValue(''); // D email
-      sheet.getRange(i + 2, 5).setValue(''); // E contato
-      sheet.getRange(i + 2, 6).setValue(''); // F codigo reserva
-      sheet.getRange(i + 2, 7).setValue(''); // G data/hora reserva
-      sheet.getRange(i + 2, 8).setValue('Não'); // H pagamento confirmado? -> Não
-
-      return { sucesso: true, mensagem: 'Número liberado com sucesso!' };
-    }
+    });
+    return { success: true, message: 'Reservas não pagas resetadas com sucesso!' };
+  } catch (err) {
+    console.error('Erro resetarReservasNaoPagas:', err);
+    return { success: false, message: 'Erro interno: ' + err.message };
   }
-
-  return { sucesso: false, mensagem: 'Número não encontrado!' };
 }
 
-// ---------------------------
-// Resetar rifa completa (volta tudo a Disponível e limpa dados)
-// ---------------------------
 function resetarRifaCompleta() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName('rifa');
-  if (!sheet) return { success: false, message: 'Planilha não encontrada.' };
-
-  for (let i = 2; i <= 101; i++) {
-    sheet.getRange(`B${i}`).setValue('Disponível');
-    sheet.getRange(`C${i}:G${i}`).clearContent();
-    sheet.getRange(`H${i}`).setValue('Não');
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
+    if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
+    sheet.getRange('B2:I101').clearContent();
+    return { success: true, message: 'Rifa completa resetada com sucesso!' };
+  } catch (err) {
+    console.error('Erro resetarRifaCompleta:', err);
+    return { success: false, message: 'Erro interno: ' + err.message };
   }
-  // Limpar dados do sorteio K2..N2
-  sheet.getRange("K2:N2").clearContent();
-  return { success: true, message: 'Rifa resetada completamente.' };
 }
 
-// ---------------------------
-// Util: gerar código aleatório
-// ---------------------------
+function resetNumeroIndividual(numero, senha) {
+  try {
+    if (String(senha) !== String(getSenhaAdmin())) {
+  return { success: false, message: 'Senha incorreta.' };
+}
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
+    if (!sheet) return { success: false, message: 'Planilha "rifa" não encontrada.' };
+
+    const numeros = sheet.getRange('A2:A101').getValues().map(r => String(r[0]).padStart(2,'0'));
+    const linha = numeros.findIndex(n => n === String(numero).padStart(2,'0'));
+    if (linha === -1) return { success: false, message: 'Número não encontrado.' };
+
+    sheet.getRange(`B${linha+2}`).setValue('Disponível');
+    sheet.getRange(`C${linha+2}:G${linha+2}`).clearContent();
+    sheet.getRange(`H${linha+2}`).setValue('Não');
+    return { success: true, message: `Número ${String(numero).padStart(2,'0')} liberado com sucesso.` };
+  } catch (err) {
+    console.error('Erro resetNumeroIndividual:', err);
+    return { success: false, message: 'Erro interno: ' + err.message };
+  }
+}
+
+function listarPagos() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('rifa');
+    if (!sheet) return [];
+    const dados = sheet.getRange('A2:H101').getValues();
+    return dados
+      .map((row,i) => ({ numero: String(row[0]).padStart(2,'0'), status: row[1], pago: row[7] }))
+      .filter(r => String(r.status).toLowerCase().indexOf('pag') !== -1 || String(r.pago).toLowerCase() === 'sim')
+      .map(r => r.numero);
+  } catch (err) {
+    console.error('Erro listarPagos:', err);
+    return [];
+  }
+}
+
+function debugInfo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetNames = ss.getSheets().map(s => s.getName());
+  const sheet = ss.getSheetByName('rifa');
+  if (!sheet) return { ok: false, message: 'Planilha "rifa" NAO encontrada', sheets: sheetNames };
+  return { ok: true, sheets: sheetNames, header: sheet.getRange('A1:Q1').getValues()[0], sample: sheet.getRange('A2:Q6').getValues() };
+}
+
 function gerarCodigo() {
   const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const numeros = Math.floor(Math.random() * 9000) + 1000;
-  const letra = letras.charAt(Math.floor(Math.random() * letras.length));
-  return letra + numeros;
+  return letras.charAt(Math.floor(Math.random() * letras.length)) + numeros;
 }
+
+// ---------------------------
+// SORTEIO COM PESOS + EMBARALHAMENTO REAL
+// ---------------------------
+function iniciarSorteio() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName('rifa');
+    if (!sheet) return { success:false, message:"Aba 'rifa' não encontrada." };
+
+    const dados = sheet.getRange('A2:H101').getValues(); // 1–100
+    let numeros = [];
+
+    for (let i = 0; i < dados.length; i++) {
+      const num = String(dados[i][0]).padStart(2,'0');
+      const nome = dados[i][2] || '';
+      const status = (dados[i][7] || '').toString().toLowerCase().trim(); // pago?
+      const reservado = (dados[i][6] || '').toString(); // reservado/pendente?
+
+      // 🏆 Sistema de pesos:
+      // Pago: maior chance, mas não é absoluto
+      // Reservado/Pendente: chance média
+      // Livre: chance mínima (só para evitar padrão)
+      let peso = 1;
+      if (status === 'sim') peso = 10;            // pago
+      else if (reservado) peso = 3;               // reservado
+      else peso = 1;                              // livre
+
+      for (let p = 0; p < peso; p++) numeros.push(num);
+    }
+
+    if (numeros.length === 0) {
+      return { success:false, message:"Nenhum número disponível." };
+    }
+
+    // 🔐 Fisher-Yates com ruído criptográfico
+    for (let i = numeros.length - 1; i > 0; i--) {
+      const bytes = Utilities.getRandomBytes(2);
+      const rand = (bytes[0] << 8) + bytes[1];
+      const j = rand % (i + 1);
+      [numeros[i], numeros[j]] = [numeros[j], numeros[i]];
+    }
+
+    const final = numeros[0]; // resultado altamente imprevisível
+
+    // Localiza dados do ganhador
+    const linhaIdx = dados.findIndex(r => String(r[0]).padStart(2,'0') === final);
+    const codigo = (dados[linhaIdx][5] || '').toString().substring(0,3);
+    const nome = dados[linhaIdx][2] || '';
+
+    return {
+      success:true,
+      numeroFinal: final,
+      codigo,
+      nome
+    };
+
+  } catch (err) {
+    console.error("Erro iniciarSorteio:", err);
+    return { success:false, message:err.message };
+  }
+}
+
+// ===============================
+// FUNÇÕES AUXILIARES DO SORTEIO
+// (usam dados reais da planilha)
+// ===============================
+
+// retorna o número vencedor já sorteado no fluxo público
+function getNumeroVencedorPublico() {
+  const estado = getEstadoSorteio();
+  if (estado && estado.numeroFinal) {
+    return estado.numeroFinal;
+  }
+  throw new Error('Número vencedor não encontrado no estado do sorteio.');
+}
+
+// gera um identificador simples do sorteio
+function gerarNumeroSorteio() {
+  const agora = new Date();
+  return Utilities.formatDate(
+    agora,
+    SpreadsheetApp.getActive().getSpreadsheetTimeZone(),
+    'yyyyMMdd-HHmmss'
+  );
+}
+
+// valor da rifa (coluna M ou fixo se preferir)
+function getValorRifa() {
+  const s = SpreadsheetApp.getActive().getSheetByName('rifa');
+  if (!s) return '';
+  return s.getRange('M2').getValue() || '';
+}
+
+// prêmio atual (coluna O)
+function getPremioAtual() {
+  const s = SpreadsheetApp.getActive().getSheetByName('rifa');
+  if (!s) return '';
+  return s.getRange('O2').getValue() || '';
+}
+
+// meta de vendas (coluna P)
+function getMetaVendas() {
+  const s = SpreadsheetApp.getActive().getSheetByName('rifa');
+  if (!s) return '';
+  return s.getRange('P2').getValue() || '';
+}
+
+// total vendido (coluna Q)
+function getTotalVendido() {
+  const s = SpreadsheetApp.getActive().getSheetByName('rifa');
+  if (!s) return '';
+  return s.getRange('Q2').getValue() || '';
+}
+
+function finalizarSorteioPublico() {
+  const vencedor = getNumeroVencedorPublico(); // o número sorteado
+
+if (!vencedor) {
+    throw new Error('Tentativa de finalizar sorteio sem vencedor.');
+  }
+
+  const numeroSorteio = gerarNumeroSorteio();
+  const valor = getValorRifa();
+  const dataHora = new Date();
+  const premio = getPremioAtual();
+  const metaVendas = getMetaVendas();
+  const totalVendido = getTotalVendido();
+
+  registrarResultadoSorteio(
+    vencedor,
+    numeroSorteio,
+    valor,
+    dataHora,
+    premio,
+    metaVendas,
+    totalVendido
+  );
+}
+
+
+
+
